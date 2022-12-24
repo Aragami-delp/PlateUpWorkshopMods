@@ -90,6 +90,13 @@
     <Reference Include="Unity.Entities">
       <HintPath>$(PlateUpGameFolder)\PlateUp_Data\Managed\Unity.Entities.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.InputSystem, Version=1.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(PlateUpGameFolder)\PlateUp_Data\Managed\Unity.InputSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.InputSystem.RebindingUI">
+      <HintPath>$(PlateUpGameFolder)\PlateUp_Data\Managed\Unity.InputSystem.RebindingUI.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>$(PlateUpGameFolder)\PlateUp_Data\Managed\Unity.Mathematics.dll</HintPath>
     </Reference>

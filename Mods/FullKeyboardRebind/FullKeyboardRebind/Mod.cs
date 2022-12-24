@@ -2,21 +2,25 @@
 using KitchenLib;
 using KitchenMods;
 using System.Reflection;
+using System.Collections;
 using UnityEngine;
-
+using Controllers;
+using KitchenData;
+using HarmonyLib;
+using Kitchen.Modules;
+using UnityEngine.InputSystem;
+using System.Collections.Generic;
+using System;
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenFullKeyboardRebind
 {
     public class Mod : BaseMod
     {
-        // guid must be unique and is recommended to be in reverse domain name notation
-        // mod name that is displayed to the player and listed in the mods menu
-        // mod version must follow semver e.g. "1.2.3"
         public const string MOD_GUID = "aragami.plateup.mods.fullkeyboardrebind";
         public const string MOD_NAME = "FullKeyboardRebind";
         public const string MOD_VERSION = "0.1.0";
         public const string MOD_AUTHOR = "Aragami";
-        public const string MOD_GAMEVERSION = ">=1.1.1";
+        public const string MOD_GAMEVERSION = ">=1.1.2";
         // Game version this mod is designed for in semver
         // e.g. ">=1.1.1" current and all future
         // e.g. ">=1.1.1 <=1.2.3" for all from/until
@@ -27,13 +31,12 @@ namespace KitchenFullKeyboardRebind
         {
             base.Initialise();
             // For log file output so the official plateup support staff can identify if/which a mod is being used
-            LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!"); 
-
+            LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!");
         }
 
         protected override void OnUpdate()
         {
-            
+
         }
 
         #region Logging
@@ -45,6 +48,121 @@ namespace KitchenFullKeyboardRebind
         public static void LogWarning(object _log) { LogWarning(_log.ToString()); }
         public static void LogError(object _log) { LogError(_log.ToString()); }
         #endregion
-    }
 
+        [HarmonyPatch(typeof(ControlRebindElement), nameof(ControlRebindElement.Setup))]
+        class ControlRebindElement_Setup_Patch
+        {
+
+            [HarmonyPostfix]
+            static void Postfix(ControlRebindElement __instance, int player)
+            {
+                if (InputSourceIdentifier.DefaultInputSource.GetCurrentController(player) == ControllerType.Keyboard)
+                {
+                    __instance.AddRebindOption("Movement Up", "Movement_Up");
+                    __instance.AddRebindOption("Movement Left", "Movement_Left");
+                    __instance.AddRebindOption("Movement Down", "Movement_Down");
+                    __instance.AddRebindOption("Movement Right", "Movement_Right");
+                }
+            }                       
+        }
+
+        static public void StartInteractiveRebind(InputAction _action, int _bindingIndex, Action<RebindResult> _callback)
+        {
+            //yield return new WaitForSeconds(.1f);
+            _action.Disable();
+            var m_RebindOperation = _action.PerformInteractiveRebinding(_bindingIndex)
+                       // To avoid accidental input from mouse motion
+                       .WithControlsExcluding("<Mouse>")
+                       .WithControlsExcluding("Mouse")
+                       .WithCancelingThrough("<Keyboard>/escape")
+                       .OnMatchWaitForAnother(0.2f)
+                       .Start().OnCancel(op =>
+                       {
+                           _action.Enable();
+                           Debug.LogError("cancel");
+                           _callback?.Invoke(RebindResult.Cancelled);
+                       }).OnComplete(op =>
+                       {
+                           _action.Enable();
+                           Debug.LogError("saved1");
+                           _callback?.Invoke(RebindResult.Success);
+                       });
+
+            Debug.LogError("finished");
+        }
+
+        [HarmonyPatch(typeof(ControlRebindElement), "StartRebind")]
+        class ControlRebindElement_StartRebind_Patch
+        {
+            [HarmonyPrefix]
+            static bool Prefix(ControlRebindElement __instance, string action, ModuleList ___ModuleList, LabelElement ___RebindMessage, PanelElement ___Panel)
+            {
+                String[] strParts = action.Split('_');
+                foreach (string strPart in strParts)
+                {
+                    Mod.LogError(strPart);
+                }
+                if (strParts.Length == 2 && strParts[0] == "Movement")
+                {
+                    InputAction movementAction = null;
+                    foreach (var foundAction in InputSystem.ListEnabledActions())
+                    {
+                        if (foundAction.name == "Movement")
+                            movementAction = foundAction;
+                    }
+                    int bindingIndex = -1;
+                    switch (strParts[1])
+                    {
+                        case "Up":
+                            bindingIndex = 1;
+                            break;
+                        case "Down":
+                            bindingIndex = 2;
+                            break;
+                        case "Left":
+                            bindingIndex = 3;
+                            break;
+                        case "Right":
+                            bindingIndex = 4;
+                            break;
+                    }
+                    
+                    #region Original
+                    foreach (ModuleInstance module1 in ___ModuleList.Modules)
+                    {
+                        if (module1.Module is RemapElement module)
+                            module.gameObject.SetActive(false);
+                    }
+                    ___RebindMessage.gameObject.SetActive(true);
+                    ___RebindMessage.SetLabel(GameData.Main.GlobalLocalisation["REBIND_NOW"]);
+                    if (___Panel.isActiveAndEnabled)
+                        ___Panel.SetTarget((IModule)___RebindMessage);
+                    #endregion
+
+                    #region TriggerRebind
+                    StartInteractiveRebind(movementAction, bindingIndex, (Action<RebindResult>)(result =>
+                    {
+                        switch (result)
+                        {
+                            case RebindResult.Success:
+                                // Not in first mod version - Saving can be done later - overwrite would be better anyways
+                                break;
+                            case RebindResult.Fail:
+                                // Not in first mod version - Restart binding process
+                                return;
+                            case RebindResult.RejectedInUse:
+                                ___RebindMessage.SetLabel(GameData.Main.GlobalLocalisation["REBIND_IN_USE"]);
+                                return;
+                        }
+                        MethodInfo endRebind = __instance.GetType().GetMethod("EndRebind", BindingFlags.NonPublic | BindingFlags.Instance);
+                        endRebind.Invoke(__instance, new object[0] { });
+                    }));
+                    #endregion
+                    return false; // Skip original and other prefixes
+                }
+                return true; // Do original
+            }
+        }
+    }
 }
+
