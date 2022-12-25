@@ -11,6 +11,8 @@ using Kitchen.Modules;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System;
+using System.Linq;
+using TMPro;
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenFullKeyboardRebind
 {
@@ -63,7 +65,7 @@ namespace KitchenFullKeyboardRebind
                     __instance.AddRebindOption("Movement Down", "Movement_Down");
                     __instance.AddRebindOption("Movement Right", "Movement_Right");
                 }
-            }                       
+            }
         }
 
         static public void StartInteractiveRebind(InputAction _action, int _bindingIndex, Action<RebindResult> _callback)
@@ -102,13 +104,16 @@ namespace KitchenFullKeyboardRebind
                 {
                     Mod.LogError(strPart);
                 }
+                Debug.LogError("Heyo " + action);
                 if (strParts.Length == 2 && strParts[0] == "Movement")
                 {
                     InputAction movementAction = null;
                     foreach (var foundAction in InputSystem.ListEnabledActions())
                     {
                         if (foundAction.name == "Movement")
+                        {
                             movementAction = foundAction;
+                        }
                     }
                     int bindingIndex = -1;
                     switch (strParts[1])
@@ -126,7 +131,7 @@ namespace KitchenFullKeyboardRebind
                             bindingIndex = 4;
                             break;
                     }
-                    
+
                     #region Original
                     foreach (ModuleInstance module1 in ___ModuleList.Modules)
                     {
@@ -163,6 +168,86 @@ namespace KitchenFullKeyboardRebind
                 return true; // Do original
             }
         }
+
+        static public string GetBindingNameByActionIndex(InputAction _action, int _bindingIndex)
+        {
+            string[] strArray = _action.bindings[_bindingIndex].effectivePath.Split('/');
+            return strArray[strArray.Length - 1];
+        }
+
+        [HarmonyPatch(typeof(InputSource), nameof(InputSource.GetBindingName))]
+        class InputSource_GetBindingName_Patch
+        {
+            [HarmonyPrefix]
+            static bool Prefix(InputSource __instance, int player, string action_name, ref string __result, Dictionary<int, PlayerData> ___Players)
+            {
+                Debug.LogError(action_name);
+                String[] strParts = action_name.Split('_');
+                if (strParts.Length == 2 && strParts[0] == "Movement")
+                {
+                    PlayerData playerData;
+                    if (!___Players.TryGetValue(player, out playerData))
+                    {
+                        __result = "?";
+                        return false;
+                    }
+                    InputAction action = playerData.InputData.Map.FindAction(strParts[0], false);
+                    Debug.LogError("Action found? " + action != null);
+                    int bindingIndex = -1;
+                    switch (strParts[1])
+                    {
+                        case "Up":
+                            bindingIndex = 1;
+                            break;
+                        case "Down":
+                            bindingIndex = 2;
+                            break;
+                        case "Left":
+                            bindingIndex = 3;
+                            break;
+                        case "Right":
+                            bindingIndex = 4;
+                            break;
+                    }
+                    __result = action == null ? "?" : GetBindingNameByActionIndex(action, bindingIndex);
+                    Debug.LogError("__result: " + __result); ;
+                    return false; // Skip original and other prefixes
+                }
+                return true; // Do original
+            }
+        }
+
+        //[HarmonyPatch(typeof(ControllerIcons), nameof(ControllerIcons.GetTMPIcon))]
+        //class ControllerIcons_GetTMPIcon_Patch
+        //{
+        //    [HarmonyPrefix]
+        //    static void Prefix(ControllerIcons __instance, ControllerType controller, string path)
+        //    {
+        //        Debug.LogError(controller.ToString());
+        //        Debug.LogError(path);
+        //    }
+        //}
+
+        //[HarmonyPatch(typeof(RemapElement), "UpdateBinding")]
+        //class RemapElement_UpdateBinding_Patch
+        //{
+        //    [HarmonyPrefix]
+        //    static bool Prefix(RemapElement __instance, int ___PlayerID, string ___Action, TextMeshPro ___InputPrompt)
+        //    {
+        //        //Debug.LogError(___PlayerID);
+        //        Debug.LogError(___Action);
+
+        //        if (___PlayerID == 0 || ___Action == null)
+        //            return false;
+        //        ControllerType x = InputSourceIdentifier.DefaultInputSource.GetCurrentController(___PlayerID);
+        //        string y = InputSourceIdentifier.DefaultInputSource.GetBindingName(___PlayerID, ___Action);
+        //        //Debug.LogError(x.ToString());
+        //        Debug.LogError(y);
+        //        ___InputPrompt.text = GameData.Main.GlobalLocalisation.ControllerIcons.GetTMPIcon(x, y);
+        //        return false;
+        //    }
+        //}
     }
 }
 
+// TODO: Restarting game makes all movement unusable even without mod (only bound to profile) only for profile - fixed, but not sure how and why it behaved like this to begin with
