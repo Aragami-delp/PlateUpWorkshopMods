@@ -81,16 +81,12 @@ namespace KitchenFullKeyboardRebind
                        .Start().OnCancel(op =>
                        {
                            _action.Enable();
-                           Debug.LogError("cancel");
                            _callback?.Invoke(RebindResult.Cancelled);
                        }).OnComplete(op =>
                        {
                            _action.Enable();
-                           Debug.LogError("saved1");
                            _callback?.Invoke(RebindResult.Success);
                        });
-
-            Debug.LogError("finished");
         }
 
         [HarmonyPatch(typeof(ControlRebindElement), "StartRebind")]
@@ -100,11 +96,6 @@ namespace KitchenFullKeyboardRebind
             static bool Prefix(ControlRebindElement __instance, string action, ModuleList ___ModuleList, LabelElement ___RebindMessage, PanelElement ___Panel)
             {
                 String[] strParts = action.Split('_');
-                foreach (string strPart in strParts)
-                {
-                    Mod.LogError(strPart);
-                }
-                Debug.LogError("Heyo " + action);
                 if (strParts.Length == 2 && strParts[0] == "Movement")
                 {
                     InputAction movementAction = null;
@@ -181,7 +172,6 @@ namespace KitchenFullKeyboardRebind
             [HarmonyPrefix]
             static bool Prefix(InputSource __instance, int player, string action_name, ref string __result, Dictionary<int, PlayerData> ___Players)
             {
-                Debug.LogError(action_name);
                 String[] strParts = action_name.Split('_');
                 if (strParts.Length == 2 && strParts[0] == "Movement")
                 {
@@ -192,7 +182,6 @@ namespace KitchenFullKeyboardRebind
                         return false;
                     }
                     InputAction action = playerData.InputData.Map.FindAction(strParts[0], false);
-                    Debug.LogError("Action found? " + action != null);
                     int bindingIndex = -1;
                     switch (strParts[1])
                     {
@@ -210,44 +199,10 @@ namespace KitchenFullKeyboardRebind
                             break;
                     }
                     __result = action == null ? "?" : GetBindingNameByActionIndex(action, bindingIndex);
-                    Debug.LogError("__result: " + __result); ;
                     return false; // Skip original and other prefixes
                 }
                 return true; // Do original
             }
         }
-
-        //[HarmonyPatch(typeof(ControllerIcons), nameof(ControllerIcons.GetTMPIcon))]
-        //class ControllerIcons_GetTMPIcon_Patch
-        //{
-        //    [HarmonyPrefix]
-        //    static void Prefix(ControllerIcons __instance, ControllerType controller, string path)
-        //    {
-        //        Debug.LogError(controller.ToString());
-        //        Debug.LogError(path);
-        //    }
-        //}
-
-        //[HarmonyPatch(typeof(RemapElement), "UpdateBinding")]
-        //class RemapElement_UpdateBinding_Patch
-        //{
-        //    [HarmonyPrefix]
-        //    static bool Prefix(RemapElement __instance, int ___PlayerID, string ___Action, TextMeshPro ___InputPrompt)
-        //    {
-        //        //Debug.LogError(___PlayerID);
-        //        Debug.LogError(___Action);
-
-        //        if (___PlayerID == 0 || ___Action == null)
-        //            return false;
-        //        ControllerType x = InputSourceIdentifier.DefaultInputSource.GetCurrentController(___PlayerID);
-        //        string y = InputSourceIdentifier.DefaultInputSource.GetBindingName(___PlayerID, ___Action);
-        //        //Debug.LogError(x.ToString());
-        //        Debug.LogError(y);
-        //        ___InputPrompt.text = GameData.Main.GlobalLocalisation.ControllerIcons.GetTMPIcon(x, y);
-        //        return false;
-        //    }
-        //}
     }
 }
-
-// TODO: Restarting game makes all movement unusable even without mod (only bound to profile) only for profile - fixed, but not sure how and why it behaved like this to begin with
