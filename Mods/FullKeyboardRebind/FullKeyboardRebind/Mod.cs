@@ -204,5 +204,22 @@ namespace KitchenFullKeyboardRebind
                 return true; // Do original
             }
         }
+
+        [HarmonyPatch(typeof(RemapElement), "HandleBindingChange")]
+        class RemapElement_HandleBindingChange_Patch
+        {
+            [HarmonyPrefix]
+            static void Prefix(RemapElement __instance, string ___Action, string s)
+            {
+                Debug.LogError("___Action: " + ___Action);
+                Debug.LogError("s: " + s);
+                //String[] strParts = ___Action.Split('_');
+                //if (strParts.Length == 2 && strParts[0] == "Movement")
+                //{
+                //    return false; // Skip original and other prefixes
+                //}
+                //return true; // Do original
+            }
+        }
     }
 }
