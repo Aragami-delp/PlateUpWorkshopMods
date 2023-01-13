@@ -5,35 +5,11 @@ using UnityEngine;
 using Steamworks;
 using Steamworks.Ugc;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using HarmonyLib;
 using System;
-using KitchenLib;
 
 namespace Workshopupdater
 {
-    [HarmonyPatch(typeof(StartMainMenu), nameof(StartMainMenu.Setup))]
-    public class StartMainMenu_Patch
-    {
-        [HarmonyPostfix]
-        public static void Postfix(StartMainMenu __instance)
-        {
-            MethodInfo addButton = __instance.GetType().GetMethod("AddButton", BindingFlags.NonPublic | BindingFlags.Instance);
-            addButton.Invoke(__instance, new object[] { WorkshopupdaterMain.HasModUpdate ? "UPDATES AVAILABLE" : "All mods up-to-date", (Action<int>)(i => WorkshopupdaterMain.UpdateAllMods()), 0, 1f, 0.2f });
-        }
-    }
-
-    [HarmonyPatch(typeof(RevisedMainMenu), nameof(RevisedMainMenu.Setup))]
-    public class RevisedMainMenu_Patch
-    {
-        [HarmonyPostfix]
-        public static void Postfix(RevisedMainMenu __instance)
-        {
-            MethodInfo addButton = __instance.GetType().GetMethod("AddButton", BindingFlags.NonPublic | BindingFlags.Instance);
-            addButton.Invoke(__instance, new object[] { WorkshopupdaterMain.HasModUpdate ? "UPDATES AVAILABLE" : "All mods up-to-date", (Action<int>)(i => WorkshopupdaterMain.UpdateAllMods()), 0, 1f, 0.2f });
-        }
-    }
-
     public class WorkshopupdaterMain : GenericSystemBase, IModSystem, IModInitializer
     {
         // guid must be unique and is recommended to be in reverse domain name notation
@@ -48,31 +24,26 @@ namespace Workshopupdater
         // e.g. ">=1.1.1" current and all future
         // e.g. ">=1.1.1 <=1.2.3" for all from/until
 
-        protected override void OnStartRunning()
-        {
-            base.OnStartRunning();
-        }
-
-        private static readonly Harmony m_harmony = new Harmony("aragami.plateup.mods.workshopupdater");
-
-        protected override void Initialise()
-        {
-            base.Initialise();
-            //SteamUGC.Download(2916090048, true);
-        }
-
-        protected override void OnUpdate()
-        {
-
-        }
-
         public static List<Item> updateMods = new List<Item>();
+        private static readonly Harmony m_harmony = new Harmony("aragami.plateup.mods.workshopupdater");
 
         public static bool HasModUpdate => updateMods.Count > 0;
 
+        public void PostActivate(Mod mod)
+        {
+            // Patch after initializing mods
+            LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!");
+            RetriveModUpdates();
+            PatchHarmony();
+        }
+
+        protected override void OnUpdate() { }
+        public void PreInject() { }
+        public void PostInject() { }
+
         public static void UpdateAllMods()
         {
-            // TODO: unload all mods excpet this one - nvm
+            // TODO: unload all mods excpet this one - nvm. the game should close fast enough (hopefully)
             if (updateMods.Count > 0)
             {
                 foreach (Item updateMod in updateMods)
@@ -86,7 +57,7 @@ namespace Workshopupdater
             }
             else
             {
-                LogWarning("Attempting to update mods, but there are not updates!");
+                LogWarning("Attempting to update mods, but there are no updates!");
             }
         }
 
@@ -99,12 +70,90 @@ namespace Workshopupdater
                 foreach (Item workshopItem in ugcResult.Value.Entries)
                 {
                     //LogError("ID: " + workshopItem.Id + "; UpdateTime: " + workshopItem.Chan + workshopItem.Updated.ToString() +"; Now: " + System.DateTime.UtcNow + "; Created: " + workshopItem.Created.ToString() + "; Title: " + workshopItem.Title + "; Needs update: " + workshopItem.NeedsUpdate.ToString());
-                    if (workshopItem.NeedsUpdate) // Maybe also all mods that got updated with the last day? Since Steam sometimes doesnt want to find updates
+                    if (workshopItem.NeedsUpdate) // Steam needs about 5min before it finds an update
                     {
                         updateMods.Add(workshopItem);
                     }
                 }
             }
+        }
+
+        //  http://www.java2s.com/Code/CSharp/Reflection/Getsanassemblybyitsnameifitiscurrentlyloaded.htm
+        /// <summary>
+        /// Gets an assembly by its name if it is currently loaded
+        /// </summary>
+        /// <param name="Name">Name of the assembly to return</param>
+        /// <returns>The assembly specified if it exists, otherwise it returns null</returns>
+        public static System.Reflection.Assembly GetLoadedAssembly(string Name)
+        {
+            try
+            {
+                foreach (Assembly TempAssembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    if (TempAssembly.GetName().Name.Equals(Name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return TempAssembly;
+                    }
+                }
+                return null;
+            }
+            catch { throw; }
+        }
+
+        public static void PatchHarmony()
+        {
+            List<Mod> mods = ModPreload.Mods;
+            bool isKitchenLibInstalled = false;
+            Assembly asmKitchenLib = null;
+            foreach (Mod mod in mods)
+            {
+                // KitchenLib workshop id or name
+                if (mod.Name == "2898069883" || mod.Name == "KitchenLib")
+                {
+                    try
+                    {
+                        asmKitchenLib = GetLoadedAssembly("KitchenLib-Workshop");
+                        isKitchenLibInstalled = true;
+                    }
+                    catch (Exception _ex)
+                    {
+                        // KitchenLib local install (hopefully)
+                        if (mod.Name == "KitchenLib")
+                        {
+                            asmKitchenLib = GetLoadedAssembly("KitchenLib");
+                            isKitchenLibInstalled = true;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            MethodInfo original;
+            MethodInfo postfix;
+
+            if (isKitchenLibInstalled)
+            {
+                original = asmKitchenLib.GetType("KitchenLib.RevisedMainMenu").GetMethod("Setup");
+                postfix = typeof(WorkshopupdaterMain).GetMethod(nameof(RevisedMainMenu_Postfix));
+            }
+            else
+            {
+                original = typeof(StartMainMenu).GetMethod(nameof(StartMainMenu.Setup));
+                postfix = typeof(WorkshopupdaterMain).GetMethod(nameof(StartMainMenu_Postfix));
+            }
+            m_harmony.Patch(original, postfix: new HarmonyMethod(postfix));
+        }
+
+        public static void RevisedMainMenu_Postfix(object __instance)
+        {
+            MethodInfo addButton = __instance.GetType().GetMethod("AddButton", BindingFlags.NonPublic | BindingFlags.Instance);
+            addButton.Invoke(__instance, new object[] { WorkshopupdaterMain.HasModUpdate ? "UPDATES AVAILABLE" : "All mods up-to-date", (Action<int>)(i => WorkshopupdaterMain.UpdateAllMods()), 0, 1f, 0.2f });
+        }
+
+        public static void StartMainMenu_Postfix(object __instance)
+        {
+            MethodInfo addButton = __instance.GetType().GetMethod("AddButton", BindingFlags.NonPublic | BindingFlags.Instance);
+            addButton.Invoke(__instance, new object[] { WorkshopupdaterMain.HasModUpdate ? "UPDATES AVAILABLE" : "All mods up-to-date", (Action<int>)(i => WorkshopupdaterMain.UpdateAllMods()), 0, 1f, 0.2f });
         }
 
         #region Logging
@@ -115,50 +164,6 @@ namespace Workshopupdater
         public static void LogInfo(object _log) { LogInfo(_log.ToString()); }
         public static void LogWarning(object _log) { LogWarning(_log.ToString()); }
         public static void LogError(object _log) { LogError(_log.ToString()); }
-
-        public static void PatchHarmony()
-        {
-            List<Mod> mods = ModPreload.Mods;
-            bool isKitchenLibInstalled = false;
-            foreach (Mod mod in mods)
-            {
-                // KitchenLib workshop id or name
-                if (mod.Name == "2898069883" || mod.Name == "KitchenLib")
-                {
-                    isKitchenLibInstalled = true;
-                    break;
-                }
-            }
-
-            MethodInfo original;
-            MethodInfo postfix;
-
-            if (isKitchenLibInstalled)
-            {
-                original = typeof(RevisedMainMenu).GetMethod(nameof(RevisedMainMenu.Setup));
-                postfix = typeof(RevisedMainMenu_Patch).GetMethod(nameof(RevisedMainMenu_Patch.Postfix));
-            }
-            else
-            {
-                original = typeof(StartMainMenu).GetMethod(nameof(StartMainMenu.Setup));
-                postfix = typeof(StartMainMenu_Patch).GetMethod(nameof(StartMainMenu_Patch.Postfix));
-            }
-            m_harmony.Patch(original, postfix: new HarmonyMethod(postfix));
-        }
-
-        public void PostActivate(Mod mod)
-        {
-            //TODO: Patch main menu
-            LogError($"{MOD_GUID} v{MOD_VERSION} in use!");
-            LogError("Patch Main menu here");
-            RetriveModUpdates();
-            // Patch after initializing mods
-            PatchHarmony();
-        }
-
-        public void PreInject() { }
-        public void PostInject() { }
-
         #endregion
     }
 
