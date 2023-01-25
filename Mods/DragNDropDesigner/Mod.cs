@@ -6,6 +6,7 @@ using Unity.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Mathematics;
+using HarmonyLib;
 
 namespace KitchenDragNDropDesigner
 {
@@ -17,13 +18,17 @@ namespace KitchenDragNDropDesigner
         //public const string MOD_AUTHOR = "Aragami";
         //public const string MOD_GAMEVERSION = ">=1.1.3";
 
+        private readonly HarmonyLib.Harmony m_harmony = new HarmonyLib.Harmony("aragami.plateup.harmony.dragndropdesigner");
+
         public Mod() : base() { }
 
         protected override void Initialise()
         {
+            m_harmony.PatchAll(Assembly.GetExecutingAssembly());
             base.Initialise();
             // For log file output so the official plateup support staff can identify if/which a mod is being used
             LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!");
+
             World.GetExistingSystem<PickUpAndDropAppliance>().Enabled = false;
         }
 
@@ -254,4 +259,15 @@ namespace KitchenDragNDropDesigner
         protected override void OnCreateForCompiler() => base.OnCreateForCompiler();
     }
     #endregion
+
+    //#region Add SaveSystem to pause menu
+    //[HarmonyPatch(typeof(ManageApplianceGhosts.__DisplayClass_OnUpdate_LambdaJob1), "OriginalLambdaBody")]
+    //public static class ManageApplianceGhostsOriginalLambdaBodyPatch
+    //{
+    //    static void Prefix(ManageApplianceGhosts __instance, ref CAttemptingInteraction interact)
+    //    {
+    //        interact.Location = Helper.MousePlanePos();
+    //    }
+    //}
+    //#endregion
 }
