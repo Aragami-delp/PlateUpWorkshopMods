@@ -260,14 +260,23 @@ namespace KitchenDragNDropDesigner
     }
     #endregion
 
-    //#region Add SaveSystem to pause menu
-    //[HarmonyPatch(typeof(ManageApplianceGhosts.__DisplayClass_OnUpdate_LambdaJob1), "OriginalLambdaBody")]
-    //public static class ManageApplianceGhostsOriginalLambdaBodyPatch
-    //{
-    //    static void Prefix(ManageApplianceGhosts __instance, ref CAttemptingInteraction interact)
-    //    {
-    //        interact.Location = Helper.MousePlanePos();
-    //    }
-    //}
-    //#endregion
+    #region Add SaveSystem to pause menu
+    [HarmonyPatch()]
+    public static class ManageApplianceGhostsOriginalLambdaBodyPatch
+    {
+        static MethodBase TargetMethod()
+        {
+            var type = AccessTools.FirstInner(typeof(ManageApplianceGhosts), t => t.Name.Contains("c__DisplayClass_OnUpdate_LambdaJob1"));
+            return AccessTools.FirstMethod(type, method => method.Name.Contains("OriginalLambdaBody"));
+        }
+
+        static void Prefix(ref CAttemptingInteraction interact) // Not sure what the other "CanReach" in the method does - but it works
+        {
+            if (Mouse.current.leftButton.IsPressed())
+            {
+                interact.Location = Helper.MousePlanePos();
+            }
+        }
+    }
+    #endregion
 }
