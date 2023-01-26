@@ -8,10 +8,13 @@ using UnityEngine.InputSystem;
 using Unity.Mathematics;
 using HarmonyLib;
 using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Linq;
 
 namespace KitchenDragNDropDesigner
 {
-    public class Mod : GenericSystemBase, IModSystem
+    public class Mod : GenericSystemBase, IModSystem, IModInitializer
     {
         public const string MOD_GUID = "aragami.plateup.mods.dragndropdesigner";
         public const string MOD_NAME = "DragNDropDesigner";
@@ -25,7 +28,6 @@ namespace KitchenDragNDropDesigner
 
         protected override void Initialise()
         {
-            m_harmony.PatchAll(Assembly.GetExecutingAssembly());
             base.Initialise();
             // For log file output so the official plateup support staff can identify if/which a mod is being used
             LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!");
@@ -47,6 +49,21 @@ namespace KitchenDragNDropDesigner
         public static void LogWarning(object _log) { LogWarning(_log.ToString()); }
         public static void LogError(object _log) { LogError(_log.ToString()); }
         #endregion
+
+        public void PostActivate(KitchenMods.Mod mod)
+        {
+            m_harmony.PatchAll(Assembly.GetExecutingAssembly());
+        }
+
+        public void PreInject()
+        {
+
+        }
+
+        public void PostInject()
+        {
+
+        }
     }
 
     public static class Helper
@@ -203,7 +220,7 @@ namespace KitchenDragNDropDesigner
                 else
                     ctx.Set<CItemHolder>(player, new CItemHolder());
                 SetOccupant(position, heldItem);
-                isPickedUpByMouse = false;
+                isPickedUpByMouse = flag4;
             }
             return flag5;
         }
@@ -252,7 +269,7 @@ namespace KitchenDragNDropDesigner
                         HeldItem = entity2
                     });
                     SetOccupant(interact.Location, new Entity(), component.Layer);
-                    isPickedUpByMouse = true;
+                    isPickedUpByMouse = true; // or isPickedUpByMouse = flag; two lines below
                 }
                 flag = true;
                 interact.Result = should_act ? InteractionResult.Performed : InteractionResult.Possible;
@@ -274,12 +291,42 @@ namespace KitchenDragNDropDesigner
             return AccessTools.FirstMethod(type, method => method.Name.Contains("OriginalLambdaBody"));
         }
 
-        static void Prefix(ref CAttemptingInteraction interact) // Not sure what the other "CanReach" in the method does - but it works - it shows in other rooms and should be patched
+        static void Prefix(ref CAttemptingInteraction interact)
         {
             if (MousePickUpAndDropAppliance.isPickedUpByMouse)
             {
                 interact.Location = Helper.MousePlanePos();
             }
+        }
+
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> _instructions)
+        {
+            var codes = new List<CodeInstruction>(_instructions);
+            for (var i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode == OpCodes.Ldloc_0 &&
+                    codes[i + 1].opcode == OpCodes.Ldarg_0 &&
+                    codes[i + 2].opcode == OpCodes.Ldfld &&
+                    codes[i + 3].opcode == OpCodes.Ldarg_3 &&
+                    codes[i + 4].opcode == OpCodes.Ldobj &&
+                    codes[i + 5].opcode == OpCodes.Call &&
+                    codes[i + 6].opcode == OpCodes.Ldarg_2 &&
+                    codes[i + 7].opcode == OpCodes.Ldfld &&
+                    codes[i + 8].opcode == OpCodes.Ldc_I4_0 &&
+                    codes[i + 9].opcode == OpCodes.Call &&
+                    codes[i + 10].opcode == OpCodes.And &&
+                    codes[i + 11].opcode == OpCodes.Stloc_0)
+                {
+                    codes[i + 0].opcode = OpCodes.Ldc_I4_1;
+                    codes[i + 1].opcode = OpCodes.Stloc_0;
+                    for (int j = 2; j < 12; j++)
+                    {
+                        codes[i + j].opcode = OpCodes.Nop;
+                    }
+                }
+            }
+
+            return codes.AsEnumerable();
         }
     }
     #endregion
