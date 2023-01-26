@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Mathematics;
 using HarmonyLib;
+using System;
 
 namespace KitchenDragNDropDesigner
 {
@@ -34,7 +35,7 @@ namespace KitchenDragNDropDesigner
 
         protected override void OnUpdate()
         {
-            
+
         }
 
         #region Logging
@@ -74,6 +75,7 @@ namespace KitchenDragNDropDesigner
         private bool MadeChanges;
         private CPosition Position;
         private CItemHolder Holder;
+        public static bool isPickedUpByMouse { get; private set; } = false;
 
         protected override InteractionType RequiredType => InteractionType.Grab;
 
@@ -201,6 +203,7 @@ namespace KitchenDragNDropDesigner
                 else
                     ctx.Set<CItemHolder>(player, new CItemHolder());
                 SetOccupant(position, heldItem);
+                isPickedUpByMouse = false;
             }
             return flag5;
         }
@@ -249,6 +252,7 @@ namespace KitchenDragNDropDesigner
                         HeldItem = entity2
                     });
                     SetOccupant(interact.Location, new Entity(), component.Layer);
+                    isPickedUpByMouse = true;
                 }
                 flag = true;
                 interact.Result = should_act ? InteractionResult.Performed : InteractionResult.Possible;
@@ -261,18 +265,18 @@ namespace KitchenDragNDropDesigner
     #endregion
 
     #region Add SaveSystem to pause menu
-    [HarmonyPatch()]
+    [HarmonyPatch]
     public static class ManageApplianceGhostsOriginalLambdaBodyPatch
     {
         static MethodBase TargetMethod()
         {
-            var type = AccessTools.FirstInner(typeof(ManageApplianceGhosts), t => t.Name.Contains("c__DisplayClass_OnUpdate_LambdaJob1"));
+            Type type = AccessTools.FirstInner(typeof(ManageApplianceGhosts), t => t.Name.Contains("c__DisplayClass_OnUpdate_LambdaJob1"));
             return AccessTools.FirstMethod(type, method => method.Name.Contains("OriginalLambdaBody"));
         }
 
-        static void Prefix(ref CAttemptingInteraction interact) // Not sure what the other "CanReach" in the method does - but it works
+        static void Prefix(ref CAttemptingInteraction interact) // Not sure what the other "CanReach" in the method does - but it works - it shows in other rooms and should be patched
         {
-            if (Mouse.current.leftButton.IsPressed())
+            if (MousePickUpAndDropAppliance.isPickedUpByMouse)
             {
                 interact.Location = Helper.MousePlanePos();
             }
