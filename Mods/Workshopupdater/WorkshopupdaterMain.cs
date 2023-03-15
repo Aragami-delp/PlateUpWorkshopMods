@@ -2,11 +2,11 @@
 using KitchenMods;
 using System.Reflection;
 using UnityEngine;
-using Steamworks;
 using Steamworks.Ugc;
 using System.Collections.Generic;
 using HarmonyLib;
 using System;
+using System.Threading.Tasks;
 
 namespace Workshopupdater
 {
@@ -61,22 +61,49 @@ namespace Workshopupdater
             }
         }
 
-        public static async void RetriveModUpdates()
+        public static void RetriveModUpdates()
         {
-            Query subedItemsQuery = Query.ItemsReadyToUse.WhereUserSubscribed(SteamClient.SteamId.AccountId);
-            ResultPage? ugcResult = await subedItemsQuery.GetPageAsync(1); // TODO: multiple pages? - how many?
-            if (ugcResult != null)
+            List<Item> result = Task.Run(() => Helper.GetSubscribedModItems()).GetAwaiter().GetResult();
+
+            foreach (Item workshopItem in result)
             {
-                foreach (Item workshopItem in ugcResult.Value.Entries)
+                //LogError("ID: " + workshopItem.Id + "; UpdateTime: " + workshopItem.Chan + workshopItem.Updated.ToString() +"; Now: " + System.DateTime.UtcNow + "; Created: " + workshopItem.Created.ToString() + "; Title: " + workshopItem.Title + "; Needs update: " + workshopItem.NeedsUpdate.ToString());
+                if (workshopItem.NeedsUpdate) // Steam needs about 5min before it finds an update
                 {
-                    //LogError("ID: " + workshopItem.Id + "; UpdateTime: " + workshopItem.Chan + workshopItem.Updated.ToString() +"; Now: " + System.DateTime.UtcNow + "; Created: " + workshopItem.Created.ToString() + "; Title: " + workshopItem.Title + "; Needs update: " + workshopItem.NeedsUpdate.ToString());
-                    if (workshopItem.NeedsUpdate) // Steam needs about 5min before it finds an update
-                    {
-                        updateMods.Add(workshopItem);
-                    }
+                    updateMods.Add(workshopItem);
                 }
             }
         }
+
+        ///// <summary>
+        ///// Gets all mod dependency IDs, that are needed for all given mods, including recurives dependencies
+        ///// </summary>
+        ///// <param name="_modIDs">Mods IDs use to find dependencies</param>
+        ///// <returns>List of mod IDs of dependencies not yet subscribed to</returns>
+        //public static async Task<List<Item>> GetAllModDependencies(List<Item> _modIDs)
+        //{
+        //    Queue<Item> modIDsToCheck = new Queue<Item>(_modIDs);
+        //    List<Item> retVal_ModDependencyIDs = new List<Item>();
+        //    while (modIDsToCheck.Count > 0)
+        //    {
+        //        Steamworks.SteamUGC.
+        //    }
+        //}
+
+        /// <summary>
+        /// Gets all mod dependency IDs, that are needed for the given mod
+        /// </summary>
+        /// <param name="_modID"></param>
+        /// <returns></returns>
+        //private static async Task<List<Item>> GetModDependencies(Item _modID)
+        //{
+
+        //}
+
+        //private static async Task<Item> GetSteamWorkshopItemFromID(Item)
+        //{
+
+        //}
 
         //  http://www.java2s.com/Code/CSharp/Reflection/Getsanassemblybyitsnameifitiscurrentlyloaded.htm
         /// <summary>
@@ -129,28 +156,22 @@ namespace Workshopupdater
             }
 
             MethodInfo original;
-            MethodInfo postfix;
 
             if (isKitchenLibInstalled)
             {
-                original = asmKitchenLib.GetType("KitchenLib.RevisedMainMenu").GetMethod("Setup");
-                postfix = typeof(WorkshopupdaterMain).GetMethod(nameof(RevisedMainMenu_Postfix));
+                LogInfo("KitchenLib loaded; Patching KitchenLib Main Menu");
+                original = asmKitchenLib.GetType("KitchenLib.Patches.RevisedMainMenu").GetMethod("Setup");
             }
             else
             {
+                LogInfo("KitchenLib not found; Patching Vanilla Main Menu");
                 original = typeof(StartMainMenu).GetMethod(nameof(StartMainMenu.Setup));
-                postfix = typeof(WorkshopupdaterMain).GetMethod(nameof(StartMainMenu_Postfix));
+                
             }
-            m_harmony.Patch(original, postfix: new HarmonyMethod(postfix));
+            m_harmony.Patch(original, postfix: new HarmonyMethod(typeof(WorkshopupdaterMain).GetMethod(nameof(MainMenu_Postfix))));
         }
 
-        public static void RevisedMainMenu_Postfix(object __instance)
-        {
-            MethodInfo addButton = __instance.GetType().GetMethod("AddButton", BindingFlags.NonPublic | BindingFlags.Instance);
-            addButton.Invoke(__instance, new object[] { WorkshopupdaterMain.HasModUpdate ? "UPDATES AVAILABLE" : "All mods up-to-date", (Action<int>)(i => WorkshopupdaterMain.UpdateAllMods()), 0, 1f, 0.2f });
-        }
-
-        public static void StartMainMenu_Postfix(object __instance)
+        public static void MainMenu_Postfix(object __instance)
         {
             MethodInfo addButton = __instance.GetType().GetMethod("AddButton", BindingFlags.NonPublic | BindingFlags.Instance);
             addButton.Invoke(__instance, new object[] { WorkshopupdaterMain.HasModUpdate ? "UPDATES AVAILABLE" : "All mods up-to-date", (Action<int>)(i => WorkshopupdaterMain.UpdateAllMods()), 0, 1f, 0.2f });
