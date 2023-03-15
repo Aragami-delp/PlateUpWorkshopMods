@@ -11,6 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Linq;
+using static Kitchen.StartPracticePopup;
+using System.Net;
 
 namespace KitchenDragNDropDesigner
 {
@@ -81,6 +83,41 @@ namespace KitchenDragNDropDesigner
                 return ray.GetPoint(distance);
             }
             return Vector3.zero;
+        }
+
+        /// <summary>
+        /// Gets a MethodInfo of a given class using Reflection, that doesn't have parameters
+        /// </summary>
+        /// <param name="_typeOfOriginal">Type of class to find a Method on</param>
+        /// <param name="_name">Name of the Method to find</param>
+        /// <param name="_genericT">Type of Method</param>
+        /// <returns>MethodInfo if found</returns>
+        public static MethodInfo GetMethod(Type _typeOfOriginal, string _name, Type _genericT = null)
+        {
+            MethodInfo retVal = _typeOfOriginal.GetMethod(_name, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (_genericT != null)
+            {
+                retVal = retVal.MakeGenericMethod(_genericT);
+            }
+            return retVal;
+        }
+
+        /// <summary>
+        /// Gets a MethodInfo of a given class using Reflection, that has Parameters
+        /// </summary>
+        /// <param name="_typeOfOriginal">Type of class to find a Method on</param>
+        /// <param name="_name">Name of the Method to find</param>
+        /// <param name="_paramTypes">Types of parameters of the Method in right order</param>
+        /// <param name="_genericT">Type of Method</param>
+        /// <returns>MethodInfo if found</returns>
+        public static MethodInfo GetMethod(Type _typeOfOriginal, string _name, Type[] _paramTypes, Type _genericT = null)
+        {
+            MethodInfo retVal = _typeOfOriginal.GetMethod(_name, BindingFlags.NonPublic | BindingFlags.Instance, null, _paramTypes, null);
+            if (_genericT != null)
+            {
+                retVal = retVal.MakeGenericMethod(_genericT);
+            }
+            return retVal;
         }
     }
 
@@ -281,7 +318,70 @@ namespace KitchenDragNDropDesigner
     }
     #endregion
 
-    #region Add SaveSystem to pause menu
+    #region Patches
+    // Prefer a harmony patch, since the system is partially overwritten by a KitchenLib System
+    // Can't patch "IsPossible()" since it's inline
+    [HarmonyPatch(typeof(RotateAppliances), "IsPossible")]
+    class RotateAppliancesIsPossible_Patch
+    {
+        [HarmonyPrefix]
+        static bool Prefix(RotateAppliances __instance, ref InteractionData data, ref CPosition ___Position, ref bool __result)
+        {
+            data.Attempt.Location = Helper.MousePlanePos();
+
+            MethodInfo mthHas0 = null;
+            MethodInfo mthHas1 = null;
+            MethodInfo mthHas2 = null;
+
+            MethodInfo mthHasComponent = null;
+            MethodInfo mthGetComponent = null;
+
+            try { mthHas0 = Helper.GetMethod(typeof(RotateAppliances), "Has", new Type[] { typeof(Entity) }, typeof(CMustHaveWall)); } catch (Exception _ex) { Mod.LogError("Hi1"); }
+            try { mthHas1 = Helper.GetMethod(typeof(RotateAppliances), "Has", new Type[] { typeof(Entity) }, typeof(CFixedRotation)); } catch (Exception _ex) { Mod.LogError("Hi2"); }
+            try { mthHas2 = Helper.GetMethod(typeof(RotateAppliances), "Has", new Type[] { typeof(Entity) }, typeof(CAppliance)); } catch (Exception _ex) { Mod.LogError("Hi3"); }
+
+            try { mthHasComponent = Helper.GetMethod(typeof(RotateAppliances), "HasComponent", new Type[] { typeof(Entity) }, typeof(CPosition)); } catch (Exception _ex) { Mod.LogError("Hi4"); }
+            try { mthGetComponent = Helper.GetMethod(typeof(RotateAppliances), "GetComponent", new Type[] { typeof(Entity) }, typeof(CPosition)); } catch (Exception _ex) { Mod.LogError("Hi5"); }
+
+            bool require;
+            //
+            ___Position = default(CPosition);
+            if (!(bool)mthHasComponent.Invoke(__instance, new object[] { data.Target }))
+            {
+                require = false;
+            }
+            else
+            {
+                bool isZeroSized = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex<CPosition>()).IsZeroSized;
+                ___Position = isZeroSized ? new CPosition() : (CPosition)mthGetComponent.Invoke(__instance, new object[] { data.Target });
+                require = true;
+            }
+            //
+
+            bool resRequire = require;
+            //_instance.Require<CPosition>(data.Target, out this.Position) && !_instance.Has<CMustHaveWall>(data.Target) && (!_instance.Has<CFixedRotation>(data.Target) && _instance.Has<CAppliance>(data.Target));
+            bool resHas0 = (bool)mthHas0.Invoke(__instance, new object[] { data.Target });
+            bool resHas1 = (bool)mthHas1.Invoke(__instance, new object[] { data.Target });
+            bool resHas2 = (bool)mthHas2.Invoke(__instance, new object[] { data.Target });
+
+            __result = resRequire && !resHas0 && (!resHas1 && resHas2);
+            __result = true;
+            ___Position = Helper.MousePlanePos();
+
+            return true;
+        }
+    }
+    [HarmonyPatch(typeof(RotateAppliances), "Perform")]
+    class RotateAppliancesPerform_Patch
+    {
+        [HarmonyPrefix]
+        static void Prefix(ref InteractionData data, ref CPosition ___Position)
+        {
+            Mod.LogError("Rotate");
+            data.Attempt.Location = ___Position;
+        }
+    }
+
     [HarmonyPatch]
     public static class ManageApplianceGhostsOriginalLambdaBodyPatch
     {
