@@ -32,8 +32,12 @@ namespace KitchenDependencyChecker
         public const bool DEBUG_MODE = false;
 #endif
 
+        private static bool firstStart = true;
+
         public void PostActivate(Mod mod)
         {
+            if (!firstStart) { return; }
+            if (UnityEngine.Application.platform != RuntimePlatform.WindowsPlayer || UnityEngine.Application.platform != RuntimePlatform.WindowsEditor)
             LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!");
 
             HashSet<PublishedFileId> lastItems = Helper.LoadLastModList();
@@ -67,6 +71,7 @@ namespace KitchenDependencyChecker
             }
             else
                 Helper.SaveCurrentModList(currentItems);
+            firstStart = false;
         }
 
         private void ShowDependencyDialog(List<Item> _missingItems)

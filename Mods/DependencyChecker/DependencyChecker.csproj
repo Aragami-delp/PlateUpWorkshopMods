@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
 		<Configurations>Release;Debug</Configurations>
-		<AssemblyName>$(MSBuildProjectName)-Workshop</AssemblyName>
+		<AssemblyName>$(MSBuildProjectName)</AssemblyName>
 		<LangVersion>latest</LangVersion>
 		<NoWarn>CS0114</NoWarn>
 	</PropertyGroup>
@@ -54,6 +54,6 @@
 	</ItemGroup>
 
 	<Target Name="BundleWorkshop" AfterTargets="Build" Condition="$(EnableModDeployLocal) == 'true'">
-		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName)-Workshop.dll" DestinationFolder="$(WorkshopDir)" />
+		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName).dll" DestinationFolder="$(WorkshopDir)" />
 	</Target>
 </Project>
