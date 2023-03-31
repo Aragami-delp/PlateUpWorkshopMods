@@ -43,4 +43,8 @@
 	<Target Name="BundleWorkshop" AfterTargets="Build" Condition="$(EnableModDeployLocal) == 'true'">
 		<Copy SourceFiles="$(TargetDir)$(MSBuildProjectName)-Workshop.dll" DestinationFolder="$(WorkshopDir)" />
 	</Target>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Exec Command="ECHO ============ %25TIME%25 ============" />
+	</Target>
 </Project>

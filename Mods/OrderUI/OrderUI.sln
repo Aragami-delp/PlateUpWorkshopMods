@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OderUI", "OderUI.csproj", "{67A92355-74AD-49B1-B31D-997E3CFF849D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderUI", "OrderUI.csproj", "{67A92355-74AD-49B1-B31D-997E3CFF849D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

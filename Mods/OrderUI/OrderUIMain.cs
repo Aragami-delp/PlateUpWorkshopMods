@@ -1,13 +1,14 @@
-﻿using KitchenLib;
+﻿using Kitchen;
+using KitchenLib;
 using KitchenLib.Event;
 using KitchenMods;
 using System.Reflection;
 using UnityEngine;
 
 // Namespace should have "Kitchen" in the beginning
-namespace KitchenOrderUI
+namespace OrderUI
 {
-    public class OrderUI : BaseMod, IModSystem
+    public class OrderUIMain : BaseMod, IModSystem
     {
         public const string MOD_GUID = "aragami.plateup.mods.orderui";
         public const string MOD_NAME = "OrderUI";
@@ -21,7 +22,13 @@ namespace KitchenOrderUI
         public const bool DEBUG_MODE = false;
 #endif
 
-        public OrderUI() : base(MOD_GUID, MOD_NAME, MOD_AUTHOR, MOD_VERSION, MOD_GAMEVERSION, Assembly.GetExecutingAssembly()) { }
+        public static OrderUIMain Instance { get; private set; }
+        public static AssetDirectory VanillaAssetDirectory => Instance.AssetDirectory;
+
+        public OrderUIMain() : base(MOD_GUID, MOD_NAME, MOD_AUTHOR, MOD_VERSION, MOD_GAMEVERSION, Assembly.GetExecutingAssembly())
+        {
+            Instance = this;
+        }
 
         protected override void OnInitialise()
         {
