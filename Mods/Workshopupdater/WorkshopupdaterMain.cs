@@ -155,20 +155,28 @@ namespace Workshopupdater
                 }
             }
 
-            MethodInfo original;
+            try
+            {
+                MethodInfo original;
 
-            if (isKitchenLibInstalled)
-            {
-                LogInfo("KitchenLib loaded; Patching KitchenLib Main Menu");
-                original = asmKitchenLib.GetType("KitchenLib.Patches.RevisedMainMenu").GetMethod("Setup");
+                if (isKitchenLibInstalled)
+                {
+                    LogInfo("KitchenLib loaded; Patching KitchenLib Main Menu");
+
+                    original = asmKitchenLib.GetType("KitchenLib.UI.RevisedMainMenu").GetMethod("Setup");
+                }
+                else
+                {
+                    LogInfo("KitchenLib not found; Patching Vanilla Main Menu");
+                    original = typeof(StartMainMenu).GetMethod(nameof(StartMainMenu.Setup));
+                }
+                m_harmony.Patch(original, postfix: new HarmonyMethod(typeof(WorkshopupdaterMain).GetMethod(nameof(MainMenu_Postfix))));
             }
-            else
+            catch (Exception _nullEx)
             {
-                LogInfo("KitchenLib not found; Patching Vanilla Main Menu");
-                original = typeof(StartMainMenu).GetMethod(nameof(StartMainMenu.Setup));
-                
+                LogError("Main Menu could not get patched. Did something with KitchenLib change? [RevisedMainMenu]; Original Exception: " + _nullEx.Message);
+                throw;
             }
-            m_harmony.Patch(original, postfix: new HarmonyMethod(typeof(WorkshopupdaterMain).GetMethod(nameof(MainMenu_Postfix))));
         }
 
         public static void MainMenu_Postfix(object __instance)
