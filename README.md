@@ -7,7 +7,5 @@
 [Mod Updater Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2916093422)</br>
 [Dependency Checker Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2941583284)
 
-
-
-# Diner Bros Mods
+### Diner Bros Mods
 [Multiple Mods](https://gitlab.com/Aragami_/DinerBros_Modding)
