@@ -5,3 +5,4 @@
 [Save System GitHub](https://github.com/Aragami-delp/PlateUp_Mods)
 
 [Mod Updater Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2916093422)
+[Dependency Checker Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2941583284)
