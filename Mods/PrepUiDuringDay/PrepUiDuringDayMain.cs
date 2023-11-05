@@ -12,8 +12,9 @@ namespace KitchenPrepUiDuringDay
     [HarmonyPatch(typeof(ParametersDisplayView), nameof(ParametersDisplayView.UpdateData))]
     public class Patch_Pre_PDVVD
     {
-        public static void Prefix(ref ParametersDisplayView.ViewData view_data)
+        public static void Prefix(ref ParametersDisplayView.ViewData view_data, ParametersDisplayView __instance)
         {
+            ParametersDisplayViewGO = __instance.gameObject
             PrepUiDuringDayMain.IsActuallyNight = view_data.IsNight;
             view_data.IsNight = true;
             if (PrepUiDuringDayMain.IsActuallyNight) // Save total group count
@@ -21,6 +22,7 @@ namespace KitchenPrepUiDuringDay
                 PrepUiDuringDayMain.LastGroupCount = view_data.ExpectedGroupCount;
                 PrepUiDuringDayMain.LastExtraGroupCount = view_data.ExtraGroups;
             }
+            ParametersDisplayViewGO = 
         }
     }
 
@@ -75,11 +77,16 @@ namespace KitchenPrepUiDuringDay
         public static int LastGroupCount;
         public static int LastExtraGroupCount;
 
+        public static bool ShowPrepUi = true;
+        public static GameObject ParametersDisplayViewGO;
+        
         public void PostActivate(Mod mod)
         {
             LogWarning($"{MOD_GUID} v{MOD_VERSION} in useeee!");
 
             m_harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            GameObject.Instantiate<PrepUiDuringDayMono>().DontDestroyOnLoad();
         }
 
         public void PreInject() { }
