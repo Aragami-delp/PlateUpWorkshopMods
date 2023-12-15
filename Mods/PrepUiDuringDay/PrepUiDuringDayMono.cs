@@ -15,7 +15,9 @@ namespace KitchenPrepUiDuringDay
         {
             if (Input.GetKeyDown(KeyCode.I))
             {
-                PrepUiDuringDayMain.ShowPrepUi = !PrepUiDuringDayMain.ShowPrepUi;
+                PrepUiDuringDayMain.ShowUiDuringDay = !PrepUiDuringDayMain.ShowUiDuringDay;
+                PrepUiDuringDayMain.ShowPrepUi();
+                PrepUiDuringDayMain.LogInfo("ShowUi: " + PrepUiDuringDayMain.ShowUiDuringDay);
             }
         }
     }
