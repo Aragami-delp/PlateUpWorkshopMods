@@ -19,7 +19,6 @@ namespace KitchenPrepUiDuringDay
             PrepUiDuringDayMain.ParametersDisplayViewGO = __instance.gameObject;
             if (GameInfo.CurrentScene == SceneType.Kitchen) // Only during day (the part where you cook and serve
             {
-                PrepUiDuringDayMain.LogInfo("CurrentScene: " + GameInfo.CurrentScene.ToString());
                 if (GameInfo.IsPreparationTime)
                 {
                     PrepUiDuringDayMain.LastGroupCount = view_data.ExpectedGroupCount;
@@ -51,7 +50,7 @@ namespace KitchenPrepUiDuringDay
         // KitchenLib Stuff - Keep it for additional information once needed
         public const string MOD_GUID = "aragami.plateup.mods.prepuiduringday";
         public const string MOD_NAME = "Prep UI During Day";
-        public const string MOD_VERSION = "1.0.0";
+        public const string MOD_VERSION = "1.0.1";
         public const string MOD_AUTHOR = "Aragami";
         public const string MOD_GAMEVERSION = ">=1.1.7";
         // Game version this mod is designed for in semver
