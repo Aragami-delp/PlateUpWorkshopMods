@@ -6,6 +6,7 @@
 		<AssemblyName>$(MSBuildProjectName)-Workshop</AssemblyName>
 		<LangVersion>latest</LangVersion>
 		<NoWarn>CS0114</NoWarn>
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 	
 	<PropertyGroup>
