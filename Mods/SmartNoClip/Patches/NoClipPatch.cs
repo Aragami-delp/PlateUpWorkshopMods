@@ -10,21 +10,35 @@ using UnityEngine;
 
 namespace KitchenSmartNoClip
 {
+    [HarmonyPatch(typeof(ApplianceView), nameof(HeldApplianceView.SetPosition))]
+    public class NoClipPatch_ApplianceView_SetPosition
+    {
+        [HarmonyPostfix]
+        public static void SetPosition_DisableCollision(ApplianceView __instance, bool ___SkipRotationAnimation, UpdateViewPositionData pos, Animator ___Animator)
+        {
+            // Only when tiles get picket up or placed
+            SmartNoClipMono.Instance.ApplianceView_SetPosition_Postfix();
+        }
+    }
+
     [HarmonyPatch(typeof(PlayerView), nameof(PlayerView.Initialise))]
     public class NoClipPatch_PlayerView_Initialise
     {
         [HarmonyPrefix]
         public static void Initialise_InitPlayerValues(PlayerView __instance, bool ___IsMyPlayer, Rigidbody ___Rigidbody)
         {
-            SmartNoClip.LogError($"333Enabled: Dingens; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
-            // Get the rigidbody of all my/local? players to update their collision detection mode 
-            if (!___IsMyPlayer)
-            {
-                return;
-            }
+            //SmartNoClip.LogError($"333Enabled: Dingens; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
+            //// Get the rigidbody of all my/local? players to update their collision detection mode 
+            //if (!___IsMyPlayer)
+            //{
+            //    return;
+            //}
+            ___Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
-            SmartNoClipMono.Instance.AllMyPlayerRigidbodies.Add(___Rigidbody);
-            SmartNoClipMono.Instance.OriginalCollisionMode = ___Rigidbody.collisionDetectionMode; // Will be called for each player, but shouldn't matter
+            //SmartNoClipMono.Instance.AllMyPlayerRigidbodies.Add(___Rigidbody);
+            ////SmartNoClipMono.Instance.OriginalCollisionMode = ___Rigidbody.collisionDetectionMode; // Will be called for each player, but shouldn't matter
+            //SmartNoClip.LogError($"444Enabled: Dingens; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
+
         }
     }
 

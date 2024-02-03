@@ -27,8 +27,7 @@ namespace KitchenSmartNoClip
 
         public float SpeedIncrease = 1f;
         public static SmartNoClipMono Instance { get; private set; }
-        public HashSet<Rigidbody> AllMyPlayerRigidbodies = new();
-        public CollisionDetectionMode OriginalCollisionMode;
+        public HashSet<Rigidbody> AllMyPlayerRigidbodies = new HashSet<Rigidbody>();
 
         private void Start()
         {
@@ -48,8 +47,9 @@ namespace KitchenSmartNoClip
             }
         }
 
-        private static void DisableCollisions(bool enable, string gameObjectName)
+        private static void DisableCollisions(bool ignore, string gameObjectName)
         {
+            //SmartNoClip.LogError($"DisableCollisions. Ignore: {ignore}; Name: {gameObjectName}");
             Collider[] playerColliders;
             Collider[] targetColliders;
             try
@@ -65,8 +65,8 @@ namespace KitchenSmartNoClip
             {
                 foreach (var item in targetColliders)
                 {
-                    Physics.IgnoreCollision(playerColliders[0], item, enable);
-                    Physics.IgnoreCollision(playerColliders[1], item, enable);
+                    Physics.IgnoreCollision(playerColliders[0], item, ignore);
+                    Physics.IgnoreCollision(playerColliders[1], item, ignore);
                 }
             }
         }
@@ -86,11 +86,25 @@ namespace KitchenSmartNoClip
                 SetNoClip();
                 return;
             }
+
+            if (NoClipActive)
+            {
+                //DisableCollisions(true, HATCH); // In case a door gets replaced by a hatch // Not viable since this halfes my fps
+
+            }
             //if (GameInfo.IsPreparationTime != m_isPrepTime)
             //{
             //    m_isPrepTime = GameInfo.IsPreparationTime;
             //    SetNoClip();
             //}
+        }
+
+        public void ApplianceView_SetPosition_Postfix() 
+        {
+            if (NoClipActive)
+            {
+                DisableCollisions(true, HATCH); // In case a door gets replaced by a hatch
+            }
         }
 
         public static bool NoClipActive
@@ -107,7 +121,18 @@ namespace KitchenSmartNoClip
                 foreach (Rigidbody rig in AllMyPlayerRigidbodies)
                 {
                     if (rig is not null) // if player still exists
-                        rig.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                    {
+                        try
+                        {
+                            rig.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                        }
+                        catch (Exception e)
+                        {
+                            SmartNoClip.LogError(e.InnerException.Message + "\n" + e.StackTrace);
+                        }
+                    }
+                    else
+                        SmartNoClip.LogError("No collision change");
                 }
             }
             else
@@ -115,7 +140,17 @@ namespace KitchenSmartNoClip
                 foreach (Rigidbody rig in AllMyPlayerRigidbodies)
                 {
                     if (rig is not null) // if player still exists
-                        rig.collisionDetectionMode = OriginalCollisionMode;
+                    {
+                        try
+                        {
+                            rig.collisionDetectionMode = CollisionDetectionMode.Discrete;
+                        }
+                        catch (Exception e)
+                        {
+                            SmartNoClip.LogError(e.InnerException.Message + "\n" + e.StackTrace);
+                        }
+                        SmartNoClip.LogError("No collision change");
+                    }
                 }
             }
             #endregion
@@ -124,6 +159,7 @@ namespace KitchenSmartNoClip
         public void SetNoClip()
         {
             SmartNoClip.LogError($"Enabled: {NoclipEnabled}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
+            //ChangeCollisionMode();
             //rigidbody.detectCollisions = !enable;
             SpeedIncrease = NoClipActive ? 2f : 1f;
             //DisableCollisions(enable, LARGEWALL);
@@ -163,6 +199,7 @@ namespace KitchenSmartNoClip
                     }
                 }
             }
+
             #endregion
         }
     }
