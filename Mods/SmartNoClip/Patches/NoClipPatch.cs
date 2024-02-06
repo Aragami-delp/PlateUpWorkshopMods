@@ -16,7 +16,7 @@ namespace KitchenSmartNoClip
         [HarmonyPostfix]
         public static void SetPosition_DisableCollision(ApplianceView __instance, bool ___SkipRotationAnimation, UpdateViewPositionData pos, Animator ___Animator)
         {
-            // Only when tiles get picket up or placed
+            // Only when tiles get picket up or placed this is called
             SmartNoClipMono.Instance.ApplianceView_SetPosition_Postfix();
         }
     }
@@ -27,18 +27,8 @@ namespace KitchenSmartNoClip
         [HarmonyPrefix]
         public static void Initialise_InitPlayerValues(PlayerView __instance, bool ___IsMyPlayer, Rigidbody ___Rigidbody)
         {
-            //SmartNoClip.LogError($"333Enabled: Dingens; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
-            //// Get the rigidbody of all my/local? players to update their collision detection mode 
-            //if (!___IsMyPlayer)
-            //{
-            //    return;
-            //}
-            ___Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-
-            //SmartNoClipMono.Instance.AllMyPlayerRigidbodies.Add(___Rigidbody);
-            ////SmartNoClipMono.Instance.OriginalCollisionMode = ___Rigidbody.collisionDetectionMode; // Will be called for each player, but shouldn't matter
-            //SmartNoClip.LogError($"444Enabled: Dingens; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
-
+            // TODO: Maybe add to mod active options
+            ___Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative; // Do for all players to avoid that effect when they collider with something, even when own noclip is disabled
         }
     }
 
@@ -96,6 +86,16 @@ namespace KitchenSmartNoClip
         public static void Update_CheckPrepState()
         {
             SmartNoClipMono.Instance.PlayerView_Update_Prefix();
+        }
+    }
+
+    [HarmonyPatch(typeof(EnforcePlayerBounds), "OnUpdate")]
+    public class BoundariesPatch
+    {
+        [HarmonyPrefix]
+        public static bool OnUpdate_DisableBounds(EnforcePlayerBounds __instance)
+        {
+            return !Persistence.Instance["bAllow_Players_Outside"].BoolValue;
         }
     }
 }

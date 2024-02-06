@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KitchenPrepUiDuringDay
+namespace KitchenSmartNoClip
 {
     internal class Helper
     {
@@ -29,6 +29,16 @@ namespace KitchenPrepUiDuringDay
                 return null;
             }
             catch { throw; }
+        }
+
+        public static MethodInfo GetMethod(Type _typeOfOriginal, string _name, Type _genericT = null)
+        {
+            MethodInfo retVal = _typeOfOriginal.GetMethod(_name, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (_genericT != null)
+            {
+                retVal = retVal.MakeGenericMethod(_genericT);
+            }
+            return retVal;
         }
     }
 }

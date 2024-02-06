@@ -7,6 +7,7 @@ using System.Linq;
 using System;
 using Shapes;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenSmartNoClip
@@ -21,9 +22,12 @@ namespace KitchenSmartNoClip
         private const string APPLIANCE = "Appliance(Clone)";
         private const string OUTDOORMOVEMENTBLOCKER = "Outdoor Movement Blocker(Clone)";
 
+        private int LAYER_PLAYERS;
+        private int LAYER_DEFAULT;
+
         private bool m_isPrepTime = false;
         private SceneType m_sceneType = SceneType.Null;
-        public bool NoclipEnabled = false;
+        public bool NoclipKeyEnabled = true;
 
         public float SpeedIncrease = 1f;
         public static SmartNoClipMono Instance { get; private set; }
@@ -37,12 +41,17 @@ namespace KitchenSmartNoClip
             }
             Instance = this;
             DontDestroyOnLoad(this);
+
+            LAYER_PLAYERS = LayerMask.NameToLayer("Players");
+            LAYER_DEFAULT = LayerMask.NameToLayer("Default");
         }
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.L))
+            // Logical order would be to have the conifg call first, but i suspect the unity internal call costs less
+            if (Input.GetKeyDown(KeyCode.N)/* && Persistence.Instance["bGeneral_Mod_Active"].BoolValue*/)
             {
-                NoclipEnabled = !NoclipEnabled;
+                NoclipKeyEnabled = !NoclipKeyEnabled;
+                SmartNoClip.LogError($"Key: Enabled: {NoclipKeyEnabled}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
                 SetNoClip();
             }
         }
@@ -59,7 +68,7 @@ namespace KitchenSmartNoClip
             }
             catch (Exception)
             {
-                throw; // These should find a problem, just in case i f something up
+                throw; // These shouldn't find a problem, just in case i f something up
             }
             if (playerColliders != null && playerColliders.Length > 0 && targetColliders != null && targetColliders.Length > 0)
             {
@@ -86,20 +95,9 @@ namespace KitchenSmartNoClip
                 SetNoClip();
                 return;
             }
-
-            if (NoClipActive)
-            {
-                //DisableCollisions(true, HATCH); // In case a door gets replaced by a hatch // Not viable since this halfes my fps
-
-            }
-            //if (GameInfo.IsPreparationTime != m_isPrepTime)
-            //{
-            //    m_isPrepTime = GameInfo.IsPreparationTime;
-            //    SetNoClip();
-            //}
         }
 
-        public void ApplianceView_SetPosition_Postfix() 
+        public void ApplianceView_SetPosition_Postfix()
         {
             if (NoClipActive)
             {
@@ -109,8 +107,37 @@ namespace KitchenSmartNoClip
 
         public static bool NoClipActive
         {
-            get => GameInfo.IsPreparationTime && GameInfo.CurrentScene == SceneType.Kitchen && SmartNoClipMono.Instance.NoclipEnabled;
+            get {
+                try {
+                    return SmartNoClipMono.Instance.NoclipKeyEnabled &&
+                        (
+                           NoClipActive_AllowedInPrep
+                        ||
+                           NoClipActive_AllowedInDay
+                        ||
+                           NoClipActive_AllowedInHQ
+                        )
+                    ; }
+                catch (Exception e )
+                {
+                    SmartNoClip.LogError(e.Message + " | " + e.StackTrace);
+                    return false;
+                }
+                }
         }
+
+        #region NoClipActiveRules
+        private static bool NoClipActive_AllowedInPrep => GameInfo.IsPreparationTime
+                        && GameInfo.CurrentScene == SceneType.Kitchen
+                        && Persistence.Instance["bActive_Prep"].BoolValue;
+
+        private static bool NoClipActive_AllowedInDay => !GameInfo.IsPreparationTime
+                        && GameInfo.CurrentScene == SceneType.Kitchen
+                        && Persistence.Instance["bActive_Day"].BoolValue;
+
+        private static bool NoClipActive_AllowedInHQ => GameInfo.CurrentScene == SceneType.Franchise
+                        && Persistence.Instance["bActive_HQ"].BoolValue;
+        #endregion
 
         private void ChangeCollisionMode()
         {
@@ -156,12 +183,16 @@ namespace KitchenSmartNoClip
             #endregion
         }
 
+        public void PostConfigUpdated(string _changedValue)
+        {
+            Persistence.Instance?.SaveCurrentConfig();
+            SetNoClip();
+        }
+
         public void SetNoClip()
         {
-            SmartNoClip.LogError($"Enabled: {NoclipEnabled}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
-            //ChangeCollisionMode();
-            //rigidbody.detectCollisions = !enable;
-            SpeedIncrease = NoClipActive ? 2f : 1f;
+            SmartNoClip.LogError($"Enabled: {NoclipKeyEnabled}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
+            SpeedIncrease = NoClipActive ? Persistence.Instance["fSpeed_Value"].FloatValue : 1f;
             //DisableCollisions(enable, LARGEWALL);
             DisableCollisions(NoClipActive, SHORTWALL);
             DisableCollisions(NoClipActive, HATCH);
@@ -171,10 +202,13 @@ namespace KitchenSmartNoClip
 
             // Same same but different
 
-            Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Players"), LayerMask.NameToLayer("Default"), NoClipActive); // Player?! // Outer walls?
+            SmartNoClip.LogError(Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
+            // Klappt irgendwie nicht mit false (wieder collision aktiv machen), also wird richtig gesetzt aber immer noch keine collision
+            Physics.IgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT, NoClipActive);
+            SmartNoClip.LogError(Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
 
             #region OutDoorMovementBlocker
-            if (NoclipEnabled) // OutDoorMovementBlocker should be collision by default, after "Default" layer is disabled this should still be on
+            if (NoClipActive) // OutDoorMovementBlocker should be collision by default, after "Default" layer is disabled this should still be on
             {
                 Collider[] playerColliders;
                 List<Collider> targetColliders = new List<Collider>();
@@ -199,8 +233,33 @@ namespace KitchenSmartNoClip
                     }
                 }
             }
-
             #endregion
+            // Just active all
+            else
+            {
+                // IgnoreCollisionLayer fix weil das irgendwie nicht geht:
+                Collider[] playerColliders;
+                List<Collider> targetColliders = new List<Collider>();
+                try
+                {
+                    playerColliders = GameObject.FindObjectOfType<PlayerView>().GetComponents<Collider>();
+                    GameObject.FindObjectsOfType<ApplianceView>()?.Where(x => x.gameObject.activeSelf
+                    && x.gameObject.name == APPLIANCE
+                    ).ForEach(appliance => targetColliders.AddRange(appliance.GetComponentsInChildren<Collider>()));
+                }
+                catch (Exception)
+                {
+                    throw; // These should find a problem, just in case i f something up
+                }
+                if (playerColliders != null && playerColliders.Length > 0 && targetColliders != null && targetColliders.Count > 0)
+                {
+                    foreach (var item in targetColliders)
+                    {
+                        Physics.IgnoreCollision(playerColliders[0], item, NoClipActive);
+                        Physics.IgnoreCollision(playerColliders[1], item, NoClipActive);
+                    }
+                }
+            }
         }
     }
 }

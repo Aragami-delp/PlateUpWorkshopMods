@@ -68,6 +68,8 @@ namespace KitchenSmartNoClip
 
         #endregion
 
+        private Persistence m_persistence;
+
         protected override void OnUpdate()
         {
 
@@ -81,9 +83,11 @@ namespace KitchenSmartNoClip
 
             if (GameObject.FindObjectOfType<SmartNoClipMono>() == null)
             {
+                m_persistence = new Persistence();
+
                 GameObject thingy = new GameObject("SmartNoClipMono");
                 thingy.AddComponent<SmartNoClipMono>();
-                //GameObject.DontDestroyOnLoad(thingy); // Dont in class only if instance is its own
+                //GameObject.DontDestroyOnLoad(thingy); // Is done in class
             }
         }
 

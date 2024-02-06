@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using SaveSystem;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,48 +22,100 @@ namespace KitchenSmartNoClip
                 StringValue = String.Empty;
         }
 
-        public object GetValue(SettingType _type)
+        [JsonIgnore]
+        public bool BoolValue
         {
-            if (!String.IsNullOrWhiteSpace(StringValue))
+            get
             {
-                switch (_type)
+                if (bool.TryParse(StringValue, out bool value))
                 {
-                    case SettingType.stringValue:
-                        return StringValue;
-                    case SettingType.intValue:
-                        {
-                            if (int.TryParse(StringValue, out int value))
-                            {
-                                return value;
-                            }
-                            throw new ConfigEntryParseException("Not an int value");
-                        }
-                    case SettingType.boolValue:
-                        {
-                            if (bool.TryParse(StringValue, out bool value))
-                            {
-                                return value;
-                            }
-                            throw new ConfigEntryParseException("Not a bool value");
-                        }
-                    default:
-                        throw new ConfigEntryParseException("No type");
+                    return value;
                 }
+                throw new ConfigEntryParseException("Not a bool value");
             }
-            // Default values
-            switch (_type)
-            {
-                case SettingType.stringValue:
-                    return StringValue;
-                case SettingType.intValue:
-                    return 0;
-                case SettingType.boolValue:
-                    return false;
-                default:
-                    throw new ConfigEntryParseException("No type");
-            }
-            // NOTTODO: This method looks like a sorted mess
         }
+
+        [JsonIgnore]
+        public int IntValue
+        {
+            get
+            {
+                if (int.TryParse(StringValue, out int value))
+                {
+                    return value;
+                }
+                throw new ConfigEntryParseException("Not an int value");
+            }
+        }
+
+        [JsonIgnore]
+        public float FloatValue
+        {
+            get
+            {
+                if (float.TryParse(StringValue, out float value))
+                {
+                    return value;
+                }
+                throw new ConfigEntryParseException("Not a float value");
+            }
+        }
+
+        #region OldCode
+        //public object GetValue(SettingType _type)
+        //{
+        //    if (!String.IsNullOrWhiteSpace(StringValue))
+        //    {
+        //        switch (_type)
+        //        {
+        //            case SettingType.STRING:
+        //                return StringValue;
+        //            case SettingType.INT:
+        //                {
+        //                    if (int.TryParse(StringValue, out int value))
+        //                    {
+        //                        return value;
+        //                    }
+        //                    throw new ConfigEntryParseException("Not an int value");
+        //                }
+        //            case SettingType.BOOL:
+        //                {
+        //                    if (bool.TryParse(StringValue, out bool value))
+        //                    {
+        //                        return value;
+        //                    }
+        //                    throw new ConfigEntryParseException("Not a bool value");
+        //                }
+        //            case SettingType.FLOAT:
+        //                {
+        //                    if (float.TryParse(StringValue, out float value))
+        //                    {
+        //                        return value;
+        //                    }
+        //                    throw new ConfigEntryParseException("Not a float value");
+        //                }
+        //            default:
+        //                throw new ConfigEntryParseException("No type");
+        //        }
+        //    }
+        //// Default values
+        //switch (_type)
+        //{
+        //    case SettingType.STRING:
+        //        return StringValue;
+        //    case SettingType.INT:
+        //        return default(int);
+        //    case SettingType.BOOL:
+        //        return default(bool);
+        //    case SettingType.FLOAT:
+        //        return default(float);
+        //    default:
+        //        throw new ConfigEntryParseException("No type");
+        //}
+        //// NOTTODO: This method looks like a sorted mess
+        ///
+        //}
+        #endregion
 
         public void SetValue(object _value)
         {
@@ -77,13 +128,6 @@ namespace KitchenSmartNoClip
             {
             }
         }
-
-        public enum SettingType
-        {
-            stringValue = 0,
-            intValue = 1,
-            boolValue = 2,
-        }
     }
 
     public class Persistence
@@ -91,12 +135,19 @@ namespace KitchenSmartNoClip
         #region MainPart
         public static Persistence Instance { get; private set; }
         List<ConfigEntry> persistentSettings = new List<ConfigEntry>();
-        private string settingsPath;
+        private string settingsFilePath;
 
         //TODO: Setup Persistence
-        public Persistence(string _settingsPath)
+        public Persistence() 
         {
-            settingsPath = Application.persistentDataPath + "/" + nameof(SmartNoClip.MOD_GUID);
+            if (Instance != null)
+            {
+                return;
+            }
+            Instance = this;
+
+            SmartNoClip.LogError("Init Persistence");
+            settingsFilePath = Application.persistentDataPath + "/" + SmartNoClip.MOD_NAME + ".json";
 
             LoadCurrentSettings();
         }
@@ -122,7 +173,7 @@ namespace KitchenSmartNoClip
         public void SaveCurrentConfig()
         {
             string currentJson = JsonConvert.SerializeObject(persistentSettings, Formatting.Indented);
-            File.WriteAllText(settingsPath + "/Settings.json", currentJson);
+            File.WriteAllText(settingsFilePath, currentJson);
         }
 
         /// <summary>
@@ -132,28 +183,31 @@ namespace KitchenSmartNoClip
         {
             try
             {
-                try
-                {
-                    string text = System.IO.File.ReadAllText(settingsPath + "/Settings.json");
-                    persistentSettings = JsonConvert.DeserializeObject<List<ConfigEntry>>(text);
-                }
-                catch (FileNotFoundException _fileEx)
-                {
-                    SmartNoClip.LogWarning("No setting file to load, probably started for the first time.");
-                    persistentSettings = new List<ConfigEntry>();
-                }
+                string text = System.IO.File.ReadAllText(settingsFilePath);
+                persistentSettings = JsonConvert.DeserializeObject<List<ConfigEntry>>(text);
             }
             catch (Exception _e)
             {
                 SmartNoClip.LogWarning(_e.Message);
+
+                SmartNoClip.LogWarning("No setting file to load, probably started for the first time.");
+                persistentSettings = new List<ConfigEntry>();
+
+                CreateDefaultConfig();
             }
         }
-        #endregion
 
-        #region Configs
+        private void CreateDefaultConfig()
+        {
+            //this["bGeneral_Mod_Active"].SetValue(true);
+            this["bActive_Prep"].SetValue(true);
+            this["bActive_Day"].SetValue(false);
+            this["bActive_HQ"].SetValue(true);
+            this["fSpeed_Value"].SetValue(1.5f);
+            this["bAllow_Players_Outside"].SetValue(true);
 
-
-
+            SaveCurrentConfig();
+        }
         #endregion
     }
 }
