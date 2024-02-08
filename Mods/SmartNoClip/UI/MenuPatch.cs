@@ -19,8 +19,8 @@ namespace KitchenSmartNoClip
         [HarmonyPrefix]
         public static void Setup_AddSmartNoClipMenu(MainMenu __instance)
         {
-            MethodInfo m_addButtonMenu = Helper.GetMethod(__instance.GetType(), "AddSubmenuButton");
-            m_addButtonMenu.Invoke(__instance, new object[3] { "SmartNoClip", typeof(SmartNoClipOptionsMenu), false });
+                MethodInfo m_addButtonMenu = Helper.GetMethod(__instance.GetType(), "AddSubmenuButton");
+                m_addButtonMenu.Invoke(__instance, new object[3] { "SmartNoClip", typeof(SmartNoClipOptionsMenu), false });
         }
     }
 
@@ -30,10 +30,18 @@ namespace KitchenSmartNoClip
         [HarmonyPrefix]
         public static void SetupMenus_AddSmartNoClipMenu(PlayerPauseView __instance)
         {
-            ModuleList moduleList = (ModuleList)__instance.GetType().GetField("ModuleList", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(__instance);
-            MethodInfo mInfo = Helper.GetMethod(__instance.GetType(), "AddMenu");
+            try
+            {
+                ModuleList moduleList = (ModuleList)__instance.GetType().GetField("ModuleList", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(__instance);
+                MethodInfo mInfo = Helper.GetMethod(__instance.GetType(), "AddMenu");
 
-            mInfo.Invoke(__instance, new object[2] { typeof(SmartNoClipOptionsMenu), new SmartNoClipOptionsMenu(__instance.ButtonContainer, moduleList) });
+                mInfo.Invoke(__instance, new object[2] { typeof(SmartNoClipOptionsMenu), new SmartNoClipOptionsMenu(__instance.ButtonContainer, moduleList) });
+            }
+            catch (Exception e)
+            {
+                SmartNoClip.LogError(e.InnerException.Message + "\n" + e.StackTrace);
+                throw;
+            }
         }
     }
 

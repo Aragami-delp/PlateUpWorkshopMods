@@ -4,6 +4,8 @@ using UnityEngine;
 using HarmonyLib;
 using System.Reflection;
 using TMPro;
+using UnityEngine.InputSystem;
+using System;
 
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenSmartNoClip
@@ -77,21 +79,31 @@ namespace KitchenSmartNoClip
 
         protected override void Initialise()
         {
-            LogWarning($"{MOD_GUID} v{MOD_VERSION} in useeee!");
-
-            m_harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-            if (GameObject.FindObjectOfType<SmartNoClipMono>() == null)
+            // Initialise gets called every time the game starts and when joining someone else
+            if (GameObject.FindObjectOfType<SmartNoClipMono>() != null)
             {
-                m_persistence = new Persistence();
-
-                GameObject thingy = new GameObject("SmartNoClipMono");
-                thingy.AddComponent<SmartNoClipMono>();
-                //GameObject.DontDestroyOnLoad(thingy); // Is done in class
+                return;
             }
+
+            m_persistence = new Persistence();
+
+            GameObject thingy = new GameObject("SmartNoClipMono");
+            thingy.AddComponent<SmartNoClipMono>();
+            //GameObject.DontDestroyOnLoad(thingy); // Is done in class
         }
 
-        public void PostActivate(Mod mod) { }
+        public void PostActivate(Mod mod)
+        {
+            // Early patch to patch InputSource before the first device connects
+            m_harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            LogWarning($"{MOD_GUID} v{MOD_VERSION} in useeee!");
+        }
+
+        public static void InputActionsPatch_Action_Started(InputAction.CallbackContext obj)
+        {
+            SmartNoClipMono.Instance?.ManualNoClipOverride();
+        }
 
         public void PreInject() { }
 

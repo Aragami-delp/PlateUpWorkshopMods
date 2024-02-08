@@ -27,7 +27,7 @@ namespace KitchenSmartNoClip
 
         private bool m_isPrepTime = false;
         private SceneType m_sceneType = SceneType.Null;
-        public bool NoclipKeyEnabled = true;
+        public bool NoclipKeyEnabled = false;
 
         public float SpeedIncrease = 1f;
         public static SmartNoClipMono Instance { get; private set; }
@@ -45,15 +45,11 @@ namespace KitchenSmartNoClip
             LAYER_PLAYERS = LayerMask.NameToLayer("Players");
             LAYER_DEFAULT = LayerMask.NameToLayer("Default");
         }
-        private void Update()
+
+        public void ManualNoClipOverride()
         {
-            // Logical order would be to have the conifg call first, but i suspect the unity internal call costs less
-            if (Input.GetKeyDown(KeyCode.N)/* && Persistence.Instance["bGeneral_Mod_Active"].BoolValue*/)
-            {
-                NoclipKeyEnabled = !NoclipKeyEnabled;
-                SmartNoClip.LogError($"Key: Enabled: {NoclipKeyEnabled}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
-                SetNoClip();
-            }
+            NoclipKeyEnabled = !NoclipKeyEnabled;
+            SetNoClip();
         }
 
         private static void DisableCollisions(bool ignore, string gameObjectName)
@@ -109,7 +105,7 @@ namespace KitchenSmartNoClip
         {
             get {
                 try {
-                    return SmartNoClipMono.Instance.NoclipKeyEnabled &&
+                    return SmartNoClipMono.Instance.NoclipKeyEnabled || // Key only as override
                         (
                            NoClipActive_AllowedInPrep
                         ||
@@ -191,7 +187,7 @@ namespace KitchenSmartNoClip
 
         public void SetNoClip()
         {
-            SmartNoClip.LogError($"Enabled: {NoclipKeyEnabled}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}");
+            SmartNoClip.LogError($"Overwrite: {NoclipKeyEnabled}; Active: {NoClipActive}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}; InputSystem");
             SpeedIncrease = NoClipActive ? Persistence.Instance["fSpeed_Value"].FloatValue : 1f;
             //DisableCollisions(enable, LARGEWALL);
             DisableCollisions(NoClipActive, SHORTWALL);
@@ -220,8 +216,9 @@ namespace KitchenSmartNoClip
                     && (x.transform.Find("Container")?.Find(OUTDOORMOVEMENTBLOCKER)?.name != OUTDOORMOVEMENTBLOCKER)
                     ).ForEach(appliance => targetColliders.AddRange(appliance.GetComponentsInChildren<Collider>()));
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    SmartNoClip.LogError(e.InnerException.Message + "\n" + e.StackTrace);
                     throw; // These should find a problem, just in case i f something up
                 }
                 if (playerColliders != null && playerColliders.Length > 0 && targetColliders != null && targetColliders.Count > 0)
@@ -247,8 +244,9 @@ namespace KitchenSmartNoClip
                     && x.gameObject.name == APPLIANCE
                     ).ForEach(appliance => targetColliders.AddRange(appliance.GetComponentsInChildren<Collider>()));
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    SmartNoClip.LogError(e.InnerException.Message + "\n" + e.StackTrace);
                     throw; // These should find a problem, just in case i f something up
                 }
                 if (playerColliders != null && playerColliders.Length > 0 && targetColliders != null && targetColliders.Count > 0)
