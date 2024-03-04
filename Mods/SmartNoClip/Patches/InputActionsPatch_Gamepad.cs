@@ -48,7 +48,7 @@ namespace KitchenSmartNoClip
         public static void Rebind_AddRebind(ControlRebindElement __instance, PanelElement ___Panel, ModuleList ___ModuleList)
         {
             SmartNoClip.LogWarning("Localization error is from mod SmartNoClip. It is not easily avoidable, but it also doesn't cause any problems.");
-            __instance.AddRebindOption("NoClip", InputActionsPatch_Gamepad.SmartNoClipInputActionName);
+            __instance.AddRebindOption("Noclip", InputActionsPatch_Gamepad.SmartNoClipInputActionName);
             ___Panel.SetTarget(___ModuleList);
         }
     }

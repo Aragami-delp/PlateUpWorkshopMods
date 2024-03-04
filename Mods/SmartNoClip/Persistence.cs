@@ -181,6 +181,7 @@ namespace KitchenSmartNoClip
         /// </summary>
         private void LoadCurrentSettings()
         {
+
             try
             {
                 string text = System.IO.File.ReadAllText(settingsFilePath);
@@ -191,10 +192,14 @@ namespace KitchenSmartNoClip
                 SmartNoClip.LogWarning(_e.Message);
 
                 SmartNoClip.LogWarning("No setting file to load, probably started for the first time.");
-                persistentSettings = new List<ConfigEntry>();
 
+                persistentSettings = new List<ConfigEntry>();
                 CreateDefaultConfig();
             }
+
+            //// Since there were some save problems i didn't figure out yet
+            //persistentSettings = new List<ConfigEntry>();
+            //CreateDefaultConfig();
         }
 
         private void CreateDefaultConfig()
@@ -202,7 +207,7 @@ namespace KitchenSmartNoClip
             //this["bGeneral_Mod_Active"].SetValue(true);
             this["bActive_Prep"].SetValue(true);
             this["bActive_Day"].SetValue(false);
-            this["bActive_HQ"].SetValue(true);
+            this["bActive_HQ"].SetValue(false);
             this["fSpeed_Value"].SetValue(1.5f);
             this["bAllow_Players_Outside"].SetValue(true);
 

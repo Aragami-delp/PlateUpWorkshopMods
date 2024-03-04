@@ -54,12 +54,12 @@ namespace KitchenSmartNoClip
 
         private static void DisableCollisions(bool ignore, string gameObjectName)
         {
-            //SmartNoClip.LogError($"DisableCollisions. Ignore: {ignore}; Name: {gameObjectName}");
+            SmartNoClip.LogError($"DisableCollisions. Ignore: {ignore}; Name: {gameObjectName}");
             Collider[] playerColliders;
             Collider[] targetColliders;
             try
             {
-                playerColliders = GameObject.FindObjectOfType<PlayerView>().GetComponents<Collider>();
+                playerColliders = GameObject.FindObjectsOfType<PlayerView>()?.SelectMany(x => x.GetComponents<Collider>()).ToArray(); // All players not just own
                 targetColliders = GameObject.FindObjectsOfType<Collider>()?.Where(x => x.gameObject.activeSelf && x.gameObject.name == gameObjectName).ToArray();
             }
             catch (Exception)
@@ -70,8 +70,10 @@ namespace KitchenSmartNoClip
             {
                 foreach (var item in targetColliders)
                 {
-                    Physics.IgnoreCollision(playerColliders[0], item, ignore);
-                    Physics.IgnoreCollision(playerColliders[1], item, ignore);
+                    foreach (var pColl in playerColliders)
+                    {
+                        Physics.IgnoreCollision(pColl, item, ignore);
+                    }
                 }
             }
         }
@@ -103,8 +105,10 @@ namespace KitchenSmartNoClip
 
         public static bool NoClipActive
         {
-            get {
-                try {
+            get
+            {
+                try
+                {
                     return SmartNoClipMono.Instance.NoclipKeyEnabled || // Key only as override
                         (
                            NoClipActive_AllowedInPrep
@@ -113,13 +117,14 @@ namespace KitchenSmartNoClip
                         ||
                            NoClipActive_AllowedInHQ
                         )
-                    ; }
-                catch (Exception e )
+                    ;
+                }
+                catch (Exception e)
                 {
                     SmartNoClip.LogError(e.Message + " | " + e.StackTrace);
                     return false;
                 }
-                }
+            }
         }
 
         #region NoClipActiveRules
@@ -187,7 +192,7 @@ namespace KitchenSmartNoClip
 
         public void SetNoClip()
         {
-            SmartNoClip.LogError($"Overwrite: {NoclipKeyEnabled}; Active: {NoClipActive}; PrepTime: {GameInfo.IsPreparationTime}; Scene: {GameInfo.CurrentScene}; InputSystem");
+            SmartNoClip.LogError($"Overwrite: {NoclipKeyEnabled}");
             SpeedIncrease = NoClipActive ? Persistence.Instance["fSpeed_Value"].FloatValue : 1f;
             //DisableCollisions(enable, LARGEWALL);
             DisableCollisions(NoClipActive, SHORTWALL);
@@ -198,10 +203,10 @@ namespace KitchenSmartNoClip
 
             // Same same but different
 
-            SmartNoClip.LogError(Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
+            SmartNoClip.LogError("Before: " + Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
             // Klappt irgendwie nicht mit false (wieder collision aktiv machen), also wird richtig gesetzt aber immer noch keine collision
             Physics.IgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT, NoClipActive);
-            SmartNoClip.LogError(Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
+            SmartNoClip.LogError("After: " +Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
 
             #region OutDoorMovementBlocker
             if (NoClipActive) // OutDoorMovementBlocker should be collision by default, after "Default" layer is disabled this should still be on
@@ -225,8 +230,10 @@ namespace KitchenSmartNoClip
                 {
                     foreach (var item in targetColliders)
                     {
-                        Physics.IgnoreCollision(playerColliders[0], item, NoClipActive);
-                        Physics.IgnoreCollision(playerColliders[1], item, NoClipActive);
+                        foreach (var pColl in playerColliders)
+                        {
+                            Physics.IgnoreCollision(pColl, item, NoClipActive);
+                        }
                     }
                 }
             }
@@ -253,8 +260,10 @@ namespace KitchenSmartNoClip
                 {
                     foreach (var item in targetColliders)
                     {
-                        Physics.IgnoreCollision(playerColliders[0], item, NoClipActive);
-                        Physics.IgnoreCollision(playerColliders[1], item, NoClipActive);
+                        foreach (var pColl in playerColliders)
+                        {
+                            Physics.IgnoreCollision(pColl, item, NoClipActive);
+                        }
                     }
                 }
             }

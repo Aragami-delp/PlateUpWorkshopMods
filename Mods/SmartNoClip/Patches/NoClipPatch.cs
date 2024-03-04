@@ -29,6 +29,8 @@ namespace KitchenSmartNoClip
         {
             // TODO: Maybe add to mod active options
             ___Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative; // Do for all players to avoid that effect when they collider with something, even when own noclip is disabled
+
+            SmartNoClipMono.Instance.SetNoClip();
         }
     }
 
@@ -95,7 +97,9 @@ namespace KitchenSmartNoClip
         [HarmonyPrefix]
         public static bool OnUpdate_DisableBounds(EnforcePlayerBounds __instance)
         {
-            return !Persistence.Instance["bAllow_Players_Outside"].BoolValue;
+            return !(GameInfo.IsPreparationTime
+                        && GameInfo.CurrentScene == SceneType.Kitchen
+                        && Persistence.Instance["bAllow_Players_Outside"].BoolValue);
         }
     }
 }
