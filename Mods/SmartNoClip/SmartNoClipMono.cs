@@ -48,13 +48,13 @@ namespace KitchenSmartNoClip
 
         public void ManualNoClipOverride()
         {
-            NoclipKeyEnabled = !NoclipKeyEnabled;
+            NoclipKeyEnabled ^= true; // Invert
             SetNoClip();
         }
 
         private static void DisableCollisions(bool ignore, string gameObjectName)
         {
-            SmartNoClip.LogError($"DisableCollisions. Ignore: {ignore}; Name: {gameObjectName}");
+            SmartNoClip.LogWarning($"DisableCollisions. Ignore: {ignore}; Name: {gameObjectName}");
             Collider[] playerColliders;
             Collider[] targetColliders;
             try
@@ -84,12 +84,14 @@ namespace KitchenSmartNoClip
             if (GameInfo.IsPreparationTime != m_isPrepTime)
             {
                 m_isPrepTime = GameInfo.IsPreparationTime;
+                CheckOverrideDisable();
                 SetNoClip();
                 return;
             }
             if (GameInfo.CurrentScene != m_sceneType)
             {
                 m_sceneType = GameInfo.CurrentScene;
+                CheckOverrideDisable();
                 SetNoClip();
                 return;
             }
@@ -100,6 +102,14 @@ namespace KitchenSmartNoClip
             if (NoClipActive)
             {
                 DisableCollisions(true, HATCH); // In case a door gets replaced by a hatch
+            }
+        }
+
+        private void CheckOverrideDisable()
+        {
+            if (Persistence.Instance["bResetOverrideOnChange"].BoolValue)
+            {
+                NoclipKeyEnabled = false;
             }
         }
 
@@ -192,7 +202,7 @@ namespace KitchenSmartNoClip
 
         public void SetNoClip()
         {
-            SmartNoClip.LogError($"Overwrite: {NoclipKeyEnabled}");
+            SmartNoClip.LogWarning($"Overwrite: {NoclipKeyEnabled}");
             SpeedIncrease = NoClipActive ? Persistence.Instance["fSpeed_Value"].FloatValue : 1f;
             //DisableCollisions(enable, LARGEWALL);
             DisableCollisions(NoClipActive, SHORTWALL);
@@ -203,10 +213,10 @@ namespace KitchenSmartNoClip
 
             // Same same but different
 
-            SmartNoClip.LogError("Before: " + Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
+            SmartNoClip.LogWarning("Before: " + Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
             // Klappt irgendwie nicht mit false (wieder collision aktiv machen), also wird richtig gesetzt aber immer noch keine collision
             Physics.IgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT, NoClipActive);
-            SmartNoClip.LogError("After: " +Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
+            SmartNoClip.LogWarning("After: " +Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
 
             #region OutDoorMovementBlocker
             if (NoClipActive) // OutDoorMovementBlocker should be collision by default, after "Default" layer is disabled this should still be on

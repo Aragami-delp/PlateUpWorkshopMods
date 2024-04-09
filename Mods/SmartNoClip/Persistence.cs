@@ -31,7 +31,8 @@ namespace KitchenSmartNoClip
                 {
                     return value;
                 }
-                throw new ConfigEntryParseException("Not a bool value");
+                return false;
+                //throw new ConfigEntryParseException("Not a bool value");
             }
         }
 
@@ -44,7 +45,8 @@ namespace KitchenSmartNoClip
                 {
                     return value;
                 }
-                throw new ConfigEntryParseException("Not an int value");
+                return 1;
+                //throw new ConfigEntryParseException("Not an int value");
             }
         }
 
@@ -57,77 +59,22 @@ namespace KitchenSmartNoClip
                 {
                     return value;
                 }
-                throw new ConfigEntryParseException("Not a float value");
+                return 1f;
+                //throw new ConfigEntryParseException("Not a float value");
             }
         }
-
-        #region OldCode
-        //public object GetValue(SettingType _type)
-        //{
-        //    if (!String.IsNullOrWhiteSpace(StringValue))
-        //    {
-        //        switch (_type)
-        //        {
-        //            case SettingType.STRING:
-        //                return StringValue;
-        //            case SettingType.INT:
-        //                {
-        //                    if (int.TryParse(StringValue, out int value))
-        //                    {
-        //                        return value;
-        //                    }
-        //                    throw new ConfigEntryParseException("Not an int value");
-        //                }
-        //            case SettingType.BOOL:
-        //                {
-        //                    if (bool.TryParse(StringValue, out bool value))
-        //                    {
-        //                        return value;
-        //                    }
-        //                    throw new ConfigEntryParseException("Not a bool value");
-        //                }
-        //            case SettingType.FLOAT:
-        //                {
-        //                    if (float.TryParse(StringValue, out float value))
-        //                    {
-        //                        return value;
-        //                    }
-        //                    throw new ConfigEntryParseException("Not a float value");
-        //                }
-        //            default:
-        //                throw new ConfigEntryParseException("No type");
-        //        }
-        //    }
-        //// Default values
-        //switch (_type)
-        //{
-        //    case SettingType.STRING:
-        //        return StringValue;
-        //    case SettingType.INT:
-        //        return default(int);
-        //    case SettingType.BOOL:
-        //        return default(bool);
-        //    case SettingType.FLOAT:
-        //        return default(float);
-        //    default:
-        //        throw new ConfigEntryParseException("No type");
-        //}
-        //// NOTTODO: This method looks like a sorted mess
-        ///
-        //}
-        #endregion
 
         public void SetValue(object _value)
         {
             StringValue = _value.ToString();
         }
 
-        public class ConfigEntryParseException : Exception
-        {
-            public ConfigEntryParseException(string message) : base(message)
-            {
-            }
-        }
+        //public class ConfigEntryParseException : Exception
+        //{
+        //    public ConfigEntryParseException(string message) : base(message)
+        //    {
+        //    }
+        //}
     }
 
     public class Persistence
@@ -146,7 +93,7 @@ namespace KitchenSmartNoClip
             }
             Instance = this;
 
-            SmartNoClip.LogError("Init Persistence");
+            SmartNoClip.LogInfo("Init Persistence");
             settingsFilePath = Application.persistentDataPath + "/" + SmartNoClip.MOD_NAME + ".json";
 
             LoadCurrentSettings();
@@ -210,6 +157,7 @@ namespace KitchenSmartNoClip
             this["bActive_HQ"].SetValue(false);
             this["fSpeed_Value"].SetValue(1.5f);
             this["bAllow_Players_Outside"].SetValue(true);
+            this["bResetOverrideOnChange"].SetValue(true);
 
             SaveCurrentConfig();
         }

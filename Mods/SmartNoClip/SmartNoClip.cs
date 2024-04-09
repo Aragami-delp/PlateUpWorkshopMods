@@ -116,6 +116,9 @@ namespace KitchenSmartNoClip
         public static void LogInfo(object _log) { LogInfo(_log.ToString()); }
         public static void LogWarning(object _log) { LogWarning(_log.ToString()); }
         public static void LogError(object _log) { LogError(_log.ToString()); }
+        public static void LogInfo(Exception _log) { LogInfo(_log.Source + " " + _log.Message); }
+        public static void LogWarning(Exception _log) { LogWarning(_log.Source + " " + _log.Message); }
+        public static void LogError(Exception _log) { LogError(_log.Source + " " + _log.Message); }
 
         #endregion
     }
