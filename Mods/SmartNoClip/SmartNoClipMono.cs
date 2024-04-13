@@ -40,7 +40,7 @@ namespace KitchenSmartNoClip
                 return;
             }
             Instance = this;
-            DontDestroyOnLoad(this);
+            DontDestroyOnLoad(this); // this.gameobject?
 
             LAYER_PLAYERS = LayerMask.NameToLayer("Players");
             LAYER_DEFAULT = LayerMask.NameToLayer("Default");
@@ -54,7 +54,7 @@ namespace KitchenSmartNoClip
 
         private static void DisableCollisions(bool ignore, string gameObjectName)
         {
-            SmartNoClip.LogWarning($"DisableCollisions. Ignore: {ignore}; Name: {gameObjectName}");
+            //SmartNoClip.LogWarning($"DisableCollisions. Ignore: {ignore}; Name: {gameObjectName}");
             Collider[] playerColliders;
             Collider[] targetColliders;
             try
@@ -213,70 +213,13 @@ namespace KitchenSmartNoClip
 
             // Same same but different
 
-            SmartNoClip.LogWarning("Before: " + Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
+            //SmartNoClip.LogWarning("Before: " + Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
             // Klappt irgendwie nicht mit false (wieder collision aktiv machen), also wird richtig gesetzt aber immer noch keine collision
             Physics.IgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT, NoClipActive);
-            SmartNoClip.LogWarning("After: " +Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
+            //SmartNoClip.LogWarning("After: " + Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
 
-            #region OutDoorMovementBlocker
-            if (NoClipActive) // OutDoorMovementBlocker should be collision by default, after "Default" layer is disabled this should still be on
-            {
-                Collider[] playerColliders;
-                List<Collider> targetColliders = new List<Collider>();
-                try
-                {
-                    playerColliders = GameObject.FindObjectOfType<PlayerView>().GetComponents<Collider>();
-                    GameObject.FindObjectsOfType<ApplianceView>()?.Where(x => x.gameObject.activeSelf
-                    && x.gameObject.name == APPLIANCE
-                    && (x.transform.Find("Container")?.Find(OUTDOORMOVEMENTBLOCKER)?.name != OUTDOORMOVEMENTBLOCKER)
-                    ).ForEach(appliance => targetColliders.AddRange(appliance.GetComponentsInChildren<Collider>()));
-                }
-                catch (Exception e)
-                {
-                    SmartNoClip.LogError(e.InnerException.Message + "\n" + e.StackTrace);
-                    throw; // These should find a problem, just in case i f something up
-                }
-                if (playerColliders != null && playerColliders.Length > 0 && targetColliders != null && targetColliders.Count > 0)
-                {
-                    foreach (var item in targetColliders)
-                    {
-                        foreach (var pColl in playerColliders)
-                        {
-                            Physics.IgnoreCollision(pColl, item, NoClipActive);
-                        }
-                    }
-                }
-            }
-            #endregion
-            // Just active all
-            else
-            {
-                // IgnoreCollisionLayer fix weil das irgendwie nicht geht:
-                Collider[] playerColliders;
-                List<Collider> targetColliders = new List<Collider>();
-                try
-                {
-                    playerColliders = GameObject.FindObjectOfType<PlayerView>().GetComponents<Collider>();
-                    GameObject.FindObjectsOfType<ApplianceView>()?.Where(x => x.gameObject.activeSelf
-                    && x.gameObject.name == APPLIANCE
-                    ).ForEach(appliance => targetColliders.AddRange(appliance.GetComponentsInChildren<Collider>()));
-                }
-                catch (Exception e)
-                {
-                    SmartNoClip.LogError(e.InnerException.Message + "\n" + e.StackTrace);
-                    throw; // These should find a problem, just in case i f something up
-                }
-                if (playerColliders != null && playerColliders.Length > 0 && targetColliders != null && targetColliders.Count > 0)
-                {
-                    foreach (var item in targetColliders)
-                    {
-                        foreach (var pColl in playerColliders)
-                        {
-                            Physics.IgnoreCollision(pColl, item, NoClipActive);
-                        }
-                    }
-                }
-            }
+            // OutDoorMovementBlocker is layer customers, and can always stay enabled
+            
         }
     }
 }
