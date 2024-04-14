@@ -119,7 +119,7 @@ namespace KitchenSmartNoClip
             {
                 try
                 {
-                    return SmartNoClipMono.Instance.NoclipKeyEnabled || // Key only as override
+                    return SmartNoClipMono.Instance.NoclipKeyEnabled ^ // Key only as override. Override to the opposite of the currently active XOR
                         (
                            NoClipActive_AllowedInPrep
                         ||
