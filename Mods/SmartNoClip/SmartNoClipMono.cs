@@ -8,6 +8,7 @@ using System;
 using Shapes;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using System.Runtime.CompilerServices;
 
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenSmartNoClip
@@ -85,14 +86,14 @@ namespace KitchenSmartNoClip
             {
                 m_isPrepTime = GameInfo.IsPreparationTime;
                 CheckOverrideDisable();
-                SetNoClip();
+                SetNoClip("GameStateChanged");
                 return;
             }
             if (GameInfo.CurrentScene != m_sceneType)
             {
                 m_sceneType = GameInfo.CurrentScene;
                 CheckOverrideDisable();
-                SetNoClip();
+                SetNoClip("GameStateChanged");
                 return;
             }
         }
@@ -200,9 +201,9 @@ namespace KitchenSmartNoClip
             SetNoClip();
         }
 
-        public void SetNoClip()
+        public void SetNoClip([CallerMemberName] string _callerName = "")
         {
-            SmartNoClip.LogWarning($"Overwrite: {NoclipKeyEnabled}");
+            SmartNoClip.LogInfo($"Noclip set to {NoClipActive} by {_callerName}; Overwrite: {NoclipKeyEnabled}");
             SpeedIncrease = NoClipActive ? Persistence.Instance["fSpeed_Value"].FloatValue : 1f;
             //DisableCollisions(enable, LARGEWALL);
             DisableCollisions(NoClipActive, SHORTWALL);

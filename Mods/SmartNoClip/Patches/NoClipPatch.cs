@@ -30,7 +30,7 @@ namespace KitchenSmartNoClip
             // TODO: Maybe add to mod active options
             ___Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative; // Do for all players to avoid that effect when they collider with something, even when own noclip is disabled
 
-            SmartNoClipMono.Instance.SetNoClip();
+            SmartNoClipMono.Instance.SetNoClip("NewPlayerJoined");
         }
     }
 

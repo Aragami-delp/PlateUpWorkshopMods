@@ -10,39 +10,6 @@ using System;
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenSmartNoClip
 {
-    //[HarmonyPatch(typeof(ParametersDisplayView), nameof(ParametersDisplayView.UpdateData))]
-    //public class Patch_Pre_PDVVD
-    //{
-    //    public static void Prefix(ref ParametersDisplayView.ViewData view_data, ParametersDisplayView __instance)
-    //    {
-    //        PrepUiDuringDayMain.ParametersDisplayViewGO = __instance.gameObject;
-    //        if (GameInfo.CurrentScene == SceneType.Kitchen) // Only during day (the part where you cook and serve
-    //        {
-    //            if (GameInfo.IsPreparationTime)
-    //            {
-    //                PrepUiDuringDayMain.LastGroupCount = view_data.ExpectedGroupCount;
-    //                PrepUiDuringDayMain.LastExtraGroupCount = view_data.ExtraGroups;
-    //            }
-    //        }
-    //    }
-    //}
-
-    //[HarmonyPatch(typeof(ParametersDisplayView), nameof(ParametersDisplayView.UpdateData))]
-    //public class Patch_Pos_PDVVD
-    //{
-    //    public static void Postfix(TextMeshPro ___CustomersPerHour, ParametersDisplayView.ViewData view_data)
-    //    {
-    //        PrepUiDuringDayMain.ShowPrepUi();
-    //        if (!GameInfo.IsPreparationTime) // Usually shows remaining groups to spawn. Override with total from day
-    //        {
-    //            if (view_data.ExtraGroups <= 0)
-    //                ___CustomersPerHour.text = string.Format("{0}", PrepUiDuringDayMain.LastGroupCount);
-    //            else
-    //                ___CustomersPerHour.text = string.Format("{0} + {1}", PrepUiDuringDayMain.LastGroupCount, PrepUiDuringDayMain.LastExtraGroupCount);
-    //        }
-    //    }
-    //}
-
     public class SmartNoClip : GenericSystemBase, IModSystem, IModInitializer
     {
         #region Pre
