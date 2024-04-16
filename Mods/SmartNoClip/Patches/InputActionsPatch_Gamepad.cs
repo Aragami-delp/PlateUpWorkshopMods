@@ -15,6 +15,9 @@ using Kitchen.Modules;
 
 namespace KitchenSmartNoClip
 {
+    /// <summary>
+    /// Adds the noclip override to the gamepad actions map
+    /// </summary>
     [HarmonyPatch(typeof(Maps), nameof(Maps.NewGamepad))]
     public class InputActionsPatch_Gamepad
     {
@@ -29,6 +32,9 @@ namespace KitchenSmartNoClip
         }    
     }
 
+    /// <summary>
+    /// Adds the noclip override to the keyboard actions map
+    /// </summary>
     [HarmonyPatch(typeof(Maps), nameof(Maps.NewKeyboard))]
     public class InputActionsPatch_Keyboard
     {
@@ -41,6 +47,9 @@ namespace KitchenSmartNoClip
         }
     }
 
+    /// <summary>
+    /// Adds the noclip override rebind menu
+    /// </summary>
     [HarmonyPatch(typeof(ControlRebindElement), nameof(ControlRebindElement.Setup))]
     public class InputActionsPatch_Rebind
     {

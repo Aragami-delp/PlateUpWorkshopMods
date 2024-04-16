@@ -9,6 +9,9 @@ using UnityEngine;
 
 namespace KitchenSmartNoClip
 {
+    /// <summary>
+    /// Saves a single config using object.ToString, and is retrieved the other way around
+    /// </summary>
     public class ConfigEntry
     {
         [JsonProperty] public string Name { get; private set; }
@@ -77,14 +80,22 @@ namespace KitchenSmartNoClip
         //}
     }
 
+    /// <summary>
+    /// Handles saving settings
+    /// </summary>
     public class Persistence
     {
         #region MainPart
         public static Persistence Instance { get; private set; }
         List<ConfigEntry> persistentSettings = new List<ConfigEntry>();
+        /// <summary>
+        /// Settings file is placed next to the directorty of plateup saves
+        /// </summary>
         private string settingsFilePath;
 
-        //TODO: Setup Persistence
+        /// <summary>
+        /// Creates a new persistence handling
+        /// </summary>
         public Persistence() 
         {
             if (Instance != null)
@@ -100,6 +111,9 @@ namespace KitchenSmartNoClip
         }
 
 
+        /// <summary>
+        /// Get an entry for a setting
+        /// </summary>
         public ConfigEntry this[string i]
         {
             get
@@ -117,6 +131,9 @@ namespace KitchenSmartNoClip
             }
         }
 
+        /// <summary>
+        /// Saves the current config to hard disk as JSON
+        /// </summary>
         public void SaveCurrentConfig()
         {
             string currentJson = JsonConvert.SerializeObject(persistentSettings, Formatting.Indented);
@@ -124,7 +141,7 @@ namespace KitchenSmartNoClip
         }
 
         /// <summary>
-        /// Loads the settings from a JSON
+        /// Loads the settings from hard disk as JSON
         /// </summary>
         private void LoadCurrentSettings()
         {
@@ -149,6 +166,9 @@ namespace KitchenSmartNoClip
             //CreateDefaultConfig();
         }
 
+        /// <summary>
+        /// Creates a new config file on hard disk an provides default values to all current settings
+        /// </summary>
         private void CreateDefaultConfig()
         {
             //this["bGeneral_Mod_Active"].SetValue(true);

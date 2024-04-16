@@ -13,6 +13,9 @@ using System.Reflection;
 
 namespace KitchenSmartNoClip
 {
+    /// <summary>
+    /// Adds the menu button for the SmartNoClip submenu to the menu
+    /// </summary>
     [HarmonyPatch(typeof(MainMenu), nameof(MainMenu.Setup))]
     class MenuPatch
     {
@@ -24,6 +27,9 @@ namespace KitchenSmartNoClip
         }
     }
 
+    /// <summary>
+    /// Registers the SmartNoClip submenu for the esc menu
+    /// </summary>
     [HarmonyPatch(typeof(PlayerPauseView), "SetupMenus")]
     class PausePatch
     {
@@ -45,6 +51,9 @@ namespace KitchenSmartNoClip
         }
     }
 
+    /// <summary>
+    /// The menu to change SmartNoClip settings
+    /// </summary>
     public class SmartNoClipOptionsMenu : Menu<PauseMenuAction>
     {
         //public Option<bool> Option_General_Mod_Active;
@@ -82,6 +91,9 @@ namespace KitchenSmartNoClip
             AddButton(Localisation["MENU_BACK_SETTINGS"], (Action<int>)(i => RequestPreviousMenu()));
         }
 
+        /// <summary>
+        /// Adds a new option for the user to chose between different float options
+        /// </summary>
         private Option<float> NewFloatOption(string _settingsString, List<float> _possibleValues)
         {
             List<string> localization = new() { this.Localisation["SETTING_DISABLED"] };
@@ -102,6 +114,9 @@ namespace KitchenSmartNoClip
             return enableOption;
         }
 
+        /// <summary>
+        /// Adds a new option for the user to chose between true and false
+        /// </summary>
         private Option<bool> NewBoolOption(string _settingsString)
         {
             Option<bool> boolOption = new Option<bool>(

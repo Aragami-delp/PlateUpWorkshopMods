@@ -13,6 +13,9 @@ namespace KitchenSmartNoClip
     [HarmonyPatch(typeof(ApplianceView), nameof(HeldApplianceView.SetPosition))]
     public class NoClipPatch_ApplianceView_SetPosition
     {
+        /// <summary>
+        /// Called when an appliance is placed (moved?) or placed down
+        /// </summary>
         [HarmonyPostfix]
         public static void SetPosition_DisableCollision(ApplianceView __instance, bool ___SkipRotationAnimation, UpdateViewPositionData pos, Animator ___Animator)
         {
@@ -24,6 +27,9 @@ namespace KitchenSmartNoClip
     [HarmonyPatch(typeof(PlayerView), nameof(PlayerView.Initialise))]
     public class NoClipPatch_PlayerView_Initialise
     {
+        /// <summary>
+        /// Called when a new player charater is finishing joining (not a new connection, but a new controlling player)
+        /// </summary>
         [HarmonyPrefix]
         public static void Initialise_InitPlayerValues(PlayerView __instance, bool ___IsMyPlayer, Rigidbody ___Rigidbody)
         {
@@ -37,6 +43,9 @@ namespace KitchenSmartNoClip
     [HarmonyPatch(typeof(PlayerView), "Update")]
     public class NoClipPatch_PlayerView_Update
     {
+        /// <summary>
+        /// The movement speed multiplayer during noclip
+        /// </summary>
         public static float GetPlayerSpeedMultipler // Has to stay in this class to make transpiler easier
         {
             get
@@ -84,6 +93,9 @@ namespace KitchenSmartNoClip
             return code;
         }
 
+        /// <summary>
+        /// Called every frame
+        /// </summary>
         [HarmonyPrefix]
         public static void Update_CheckPrepState()
         {
@@ -94,6 +106,9 @@ namespace KitchenSmartNoClip
     [HarmonyPatch(typeof(EnforcePlayerBounds), "OnUpdate")]
     public class BoundariesPatch
     {
+        /// <summary>
+        /// Allow for out of bounce players
+        /// </summary>
         [HarmonyPrefix]
         public static bool OnUpdate_DisableBounds(EnforcePlayerBounds __instance)
         {
