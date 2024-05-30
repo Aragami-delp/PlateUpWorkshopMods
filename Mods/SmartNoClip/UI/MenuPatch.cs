@@ -83,7 +83,7 @@ namespace KitchenSmartNoClip
             Add(NewBoolOption("bAllow_Players_Outside"));
 
             AddLabel("Disable manual override on change");
-            AddInfo("If enabled, the manual override will be disabled once the game state changes and the general settings will apply.\nE.g. The day starts.");
+            AddInfo("If enabled, the manual override will be disabled once the game state changes and the above settings will apply.\nE.g. The day starts.");
             Add(NewBoolOption("bResetOverrideOnChange"));
 
             New<SpacerElement>();
