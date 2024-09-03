@@ -16,9 +16,9 @@ namespace KitchenSmartNoClip
         // KitchenLib Stuff - Keep it for additional information once needed
         public const string MOD_GUID = "aragami.plateup.mods.smartnoclip";
         public const string MOD_NAME = "SmartNoClip";
-        public const string MOD_VERSION = "0.1.0";
+        public const string MOD_VERSION = "1.0.1";
         public const string MOD_AUTHOR = "Aragami";
-        public const string MOD_GAMEVERSION = ">=1.1.8";
+        public const string MOD_GAMEVERSION = ">=1.2.0";
         // Game version this mod is designed for in semver
         // e.g. ">=1.1.3" current and all future
         // e.g. ">=1.1.3 <=1.2.3" for all from/until

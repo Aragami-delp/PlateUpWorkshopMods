@@ -54,7 +54,7 @@ namespace KitchenSmartNoClip
     /// <summary>
     /// The menu to change SmartNoClip settings
     /// </summary>
-    public class SmartNoClipOptionsMenu : Menu<PauseMenuAction>
+    public class SmartNoClipOptionsMenu : Menu<MenuAction>
     {
         //public Option<bool> Option_General_Mod_Active;
         public Option<bool> Option_Active_Prep;
@@ -79,7 +79,7 @@ namespace KitchenSmartNoClip
             AddLabel("Speed during NoClip");
             Add(NewFloatOption("fSpeed_Value", new List<float> { 1f, 1.5f, 2f, 2.5f, 3f }));
 
-            AddLabel("Allow other players out of bounce");
+            AddLabel("Allow other players out of bounds");
             Add(NewBoolOption("bAllow_Players_Outside"));
 
             AddLabel("Disable manual override on change");
