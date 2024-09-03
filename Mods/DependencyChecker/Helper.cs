@@ -27,6 +27,7 @@ namespace KitchenDependencyChecker
 
         public static List<Item> GetInstalledModItems()
         {
+            DependencyCheckerMain.LogWarning($"{DependencyCheckerMain.MOD_GUID} v{DependencyCheckerMain.MOD_VERSION} in use! TestCaseInstalledModItems");
             if (m_installedItems != null)
             {
                 return m_installedItems;
@@ -120,9 +121,21 @@ namespace KitchenDependencyChecker
             int page_number = 1;
             int result_count = 0;
             ResultPage value;
+
+            // Consider splitting _ids into smaller chunks if the set is large
+
             do
             {
-                ResultPage? page = await Query.Items.WithFileId(_ids.ToArray()).GetPageAsync(page_number);
+                // Implement timeout to prevent hanging
+                var getPageTask = Query.Items.WithFileId(_ids.ToArray()).GetPageAsync(page_number);
+                if (await Task.WhenAny(getPageTask, Task.Delay(5000)) != getPageTask)
+                {
+                    // Timeout occurred
+                    DependencyCheckerMain.LogWarning($"Timeout occurred on page {page_number}");
+                    break;
+                }
+
+                ResultPage? page = await getPageTask;
                 if (!page.HasValue)
                 {
                     break;
