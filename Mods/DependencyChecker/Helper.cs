@@ -17,7 +17,8 @@ namespace KitchenDependencyChecker
 {
     public static class Helper
     {
-        private static readonly Regex MODDEPENDENCIESLINE = new("<a href=\"https:\\/\\/steamcommunity.com\\/workshop\\/filedetails\\/\\?id=\\d+\" target=\"_blank\">", RegexOptions.IgnoreCase);
+        private static readonly Regex MODDEPENDENCIESLINE =
+            new(@"<a[^>]*href=""https://steamcommunity.com/workshop/filedetails/\?id=\d+""(?=[^>]*\btarget=""[^""]*"")(?=[^>]*\bdata-subscribed=""[^""]*"")[^>]*>", RegexOptions.IgnoreCase);
         private static readonly string MODCACHEFOLDER = Application.persistentDataPath + "/DependencyChecker";
         private static readonly string MODCACHEFILE = "LastMods.json";
 
@@ -25,7 +26,7 @@ namespace KitchenDependencyChecker
         private static List<Item> m_installedItems = null;
 
 
-        public static List<Item> GetInstalledModItems()
+        public static async Task<List<Item>> GetInstalledModItems()
         {
             DependencyCheckerMain.LogWarning($"{DependencyCheckerMain.MOD_GUID} v{DependencyCheckerMain.MOD_VERSION} in use! TestCaseInstalledModItems");
             if (m_installedItems != null)
@@ -52,7 +53,7 @@ namespace KitchenDependencyChecker
             }
 
             if (string.IsNullOrEmpty(steamPath))
-                return Task.Run(() => GetSubscribedModItems()).GetAwaiter().GetResult();
+                return await GetSubscribedModItems();
 
 
             string[] libraryfoldersVDF = File.ReadAllLines(steamPath + "\\steamapps\\libraryfolders.vdf");
@@ -87,7 +88,7 @@ namespace KitchenDependencyChecker
                     DependencyCheckerMain.LogError("Can't read workshop item id");
                 }
             }
-            m_installedItems = Task.Run(() => GetModItems(foundItemIds)).GetAwaiter().GetResult();
+            m_installedItems = await GetModItems(foundItemIds);
             return m_installedItems;
         }
 
@@ -151,9 +152,9 @@ namespace KitchenDependencyChecker
             return items;
         }
 
-        public static void SaveCurrentModList(List<Item> _items = null)
+        public static async Task SaveCurrentModList(List<Item> _items = null)
         {
-            _items ??= Task.Run(() => GetSubscribedModItems()).GetAwaiter().GetResult();
+            _items ??= await GetSubscribedModItems();
 
             HashSet<long> itemIDs = new();
             foreach (Item item in _items)
@@ -202,12 +203,12 @@ namespace KitchenDependencyChecker
             return convertedIDs;
         }
 
-        public static HashSet<PublishedFileId> GetAllModDependencies(List<Item> _items)
+        public static async Task<HashSet<PublishedFileId>> GetAllModDependencies(List<Item> _items)
         {
             HashSet<PublishedFileId> depItems = new();
             foreach (Item item in _items)
             {
-                depItems.UnionWith(Task.Run(() => GetSingleModDependencies(item)).GetAwaiter().GetResult());
+                depItems.UnionWith(await GetSingleModDependencies(item));
             }
             return depItems;
         }

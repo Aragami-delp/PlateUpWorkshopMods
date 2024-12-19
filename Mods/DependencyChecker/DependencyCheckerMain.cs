@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Steamworks.Ugc;
 using System.Linq;
 using System.Windows.Forms;
+using System;
 
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenDependencyChecker
@@ -18,7 +19,7 @@ namespace KitchenDependencyChecker
         // Mod Version must follow semver notation e.g. "1.2.3"
         public const string MOD_GUID = "aragami.plateup.mods.dependencyChecker";
         public const string MOD_NAME = "Dependency Checker";
-        public const string MOD_VERSION = "0.1.1";
+        public const string MOD_VERSION = "1.0.0";
         public const string MOD_AUTHOR = "Aragami";
         public const string MOD_GAMEVERSION = ">=1.1.4";
         // Game version this mod is designed for in semver
@@ -32,21 +33,44 @@ namespace KitchenDependencyChecker
         public const bool DEBUG_MODE = false;
 #endif
 
-        private static bool firstStart = true;
 
         public void PostActivate(Mod mod)
         {
-            if (!firstStart) { return; }
-            if (UnityEngine.Application.platform != RuntimePlatform.WindowsPlayer || UnityEngine.Application.platform != RuntimePlatform.WindowsEditor)
-            LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!");
+            //if (!firstStart) { return; }
+            if (UnityEngine.Application.platform != RuntimePlatform.WindowsPlayer && UnityEngine.Application.platform != RuntimePlatform.WindowsEditor)
+                LogWarning($"{MOD_GUID} v{MOD_VERSION} in use!");
 
-            HashSet<PublishedFileId> lastItems = Helper.LoadLastModList();
-            List<Item> currentItems = Helper.GetInstalledModItems();
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await HandleModActivationAsync(mod);
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Error in mod activation: {ex.Message}");
+                }
+            });
+        }
+
+        private async Task HandleModActivationAsync(Mod mod)
+        {
+            //HashSet<PublishedFileId> lastItems = Helper.LoadLastModList();
+            List<Item> currentItems = await Helper.GetInstalledModItems();
             //List<Item> newItems = currentItems.Where(item => !lastItems.Contains(item.Id)).ToList(); // Should get all new items // Check all for dependency change whenever a single mod is added/removed
 
-            if (!lastItems.ToHashSet().SetEquals(currentItems.Select(x => x.Id)))
+            //if (!lastItems.ToHashSet().SetEquals(currentItems.Select(x => x.Id)))
             {
-                HashSet<PublishedFileId> deps = Task.Run(() => Helper.GetAllModDependencies(currentItems)).GetAwaiter().GetResult();
+                HashSet<PublishedFileId> deps = new();
+                try
+                {
+                    deps = await Helper.GetAllModDependencies(currentItems);
+                    LogError("DepsCount" + deps.Count);
+                }
+                catch (Exception e)
+                {
+                    LogError("ErrorHere");
+                }
                 if (deps.Count > 0)
                 {
                     foreach (PublishedFileId depId in deps.ToHashSet())
@@ -59,19 +83,18 @@ namespace KitchenDependencyChecker
                             }
                         }
                     }
-                    List<Item> dependencyItems = Task.Run(() => Helper.GetModItems(deps)).GetAwaiter().GetResult();
+                    List<Item> dependencyItems = await Helper.GetModItems(deps);
 
                     if (dependencyItems.Count > 0)
                         ShowDependencyDialog(dependencyItems);
-                    else
-                        Helper.SaveCurrentModList(currentItems);
+                    //else
+                    //    Helper.SaveCurrentModList(currentItems);
                 }
-                else
-                    Helper.SaveCurrentModList(currentItems);
+                //else
+                //    Helper.SaveCurrentModList(currentItems);
             }
-            else
-                Helper.SaveCurrentModList(currentItems);
-            firstStart = false;
+            //else
+            //    Helper.SaveCurrentModList(currentItems);
         }
 
         private void ShowDependencyDialog(List<Item> _missingItems)
@@ -87,7 +110,7 @@ namespace KitchenDependencyChecker
             DialogResult result = MessageBox.Show(messageStart + messageBody + messageEnd, "DependencyChecker", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Error);
             if (result == DialogResult.Yes)
             {
-                Helper.SaveCurrentModList();
+                //Helper.SaveCurrentModList();
                 Task.Run(async () => await Helper.InstallItems(_missingItems)).GetAwaiter().GetResult();
                 startGame = false;
             }
@@ -104,17 +127,17 @@ namespace KitchenDependencyChecker
 
         public void PreInject()
         {
-            
+
         }
 
         public void PostInject()
         {
-            
+
         }
 
         protected override void OnUpdate()
         {
-            
+
         }
 
         #region Logging
