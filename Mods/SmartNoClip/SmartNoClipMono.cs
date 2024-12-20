@@ -21,6 +21,7 @@ namespace KitchenSmartNoClip
         private const string DOOR = "Door Section(Clone)";
         private const string LARGEDOOR = "External Door Section(Clone)";
         private const string APPLIANCE = "Appliance(Clone)";
+        private const string FENCE = "Fence Section(Clone)";
         private const string OUTDOORMOVEMENTBLOCKER = "Outdoor Movement Blocker(Clone)";
 
         private int LAYER_PLAYERS;
@@ -60,6 +61,7 @@ namespace KitchenSmartNoClip
             Collider[] targetColliders;
             try
             {
+                //TODO: Cache players each frame
                 playerColliders = GameObject.FindObjectsOfType<PlayerView>()?.SelectMany(x => x.GetComponents<Collider>()).ToArray(); // All players not just own
                 targetColliders = GameObject.FindObjectsOfType<Collider>()?.Where(x => x.gameObject.activeSelf && x.gameObject.name == gameObjectName).ToArray();
             }
@@ -69,6 +71,13 @@ namespace KitchenSmartNoClip
             }
             if (playerColliders != null && playerColliders.Length > 0 && targetColliders != null && targetColliders.Length > 0)
             {
+                if (gameObjectName == FENCE)
+                {
+                    float leftFenceLimit = targetColliders.Select(x => x.transform.position.x).Min();
+                    float rightFenceLimit = targetColliders.Select(x => x.transform.position.x).Max();
+                    float topFenceLimit = targetColliders.Select(x => x.transform.position.z).Max();
+                    targetColliders = targetColliders.Where(x => x.transform.position.x != leftFenceLimit && x.transform.position.x != rightFenceLimit && x.transform.position.z != topFenceLimit).ToArray();
+                }
                 foreach (var item in targetColliders)
                 {
                     foreach (var pColl in playerColliders)
@@ -208,6 +217,7 @@ namespace KitchenSmartNoClip
             //DisableCollisions(enable, LARGEWALL);
             DisableCollisions(NoClipActive, SHORTWALL);
             DisableCollisions(NoClipActive, HATCH);
+            DisableCollisions(NoClipActive, FENCE);
             // Thoses two are disabled by the default layer below
             //DisableCollisions(NoClipActive, DOOR); 
             //DisableCollisions(NoClipActive, LARGEDOOR);
@@ -220,7 +230,7 @@ namespace KitchenSmartNoClip
             //SmartNoClip.LogWarning("After: " + Physics.GetIgnoreLayerCollision(LAYER_PLAYERS, LAYER_DEFAULT));
 
             // OutDoorMovementBlocker is layer customers, and can always stay enabled
-            
+
         }
     }
 }

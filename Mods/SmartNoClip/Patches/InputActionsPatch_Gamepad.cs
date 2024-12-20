@@ -26,10 +26,19 @@ namespace KitchenSmartNoClip
         [HarmonyPostfix]
         public static void Actions_AddNoClipAction_Gamepad(ref InputActionMap __result)
         {
-            __result.AddAction(SmartNoClipInputActionName, InputActionType.Button);
-            __result.FindAction(SmartNoClipInputActionName, false).AddBinding("<Gamepad>/select");
-            __result.FindAction(SmartNoClipInputActionName, false).started += SmartNoClip.InputActionsPatch_Action_Started;
-        }    
+            try
+            {
+                SmartNoClip.LogWarning(__result.name);
+                var action = __result.FindAction(SmartNoClipInputActionName);
+                action ??= __result.AddAction(SmartNoClipInputActionName, InputActionType.Button);
+                __result.FindAction(SmartNoClipInputActionName, false).AddBinding("<Gamepad>/select");
+                __result.FindAction(SmartNoClipInputActionName, false).started += SmartNoClip.InputActionsPatch_Action_Started;
+            }
+            catch (InvalidOperationException _ex)
+            {
+                SmartNoClip.LogWarning("Tried to add multiple keybinds!");
+            }
+        }
     }
 
     /// <summary>
