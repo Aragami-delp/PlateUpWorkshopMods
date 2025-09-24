@@ -16,7 +16,7 @@ namespace KitchenSmartNoClip
         // KitchenLib Stuff - Keep it for additional information once needed
         public const string MOD_GUID = "aragami.plateup.mods.smartnoclip";
         public const string MOD_NAME = "SmartNoClip";
-        public const string MOD_VERSION = "1.0.2";
+        public const string MOD_VERSION = "1.0.3";
         public const string MOD_AUTHOR = "Aragami";
         public const string MOD_GAMEVERSION = ">=1.2.0";
         // Game version this mod is designed for in semver
@@ -62,9 +62,9 @@ namespace KitchenSmartNoClip
         public void PostActivate(Mod mod)
         {
             // Early patch to patch InputSource before the first device connects
-            m_harmony.PatchAll(Assembly.GetExecutingAssembly());
-
             LogWarning($"{MOD_GUID} v{MOD_VERSION} in useeee!");
+
+            m_harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
         public static void InputActionsPatch_Action_Started(InputAction.CallbackContext obj)
