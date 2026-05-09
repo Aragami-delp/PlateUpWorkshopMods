@@ -1,7 +1,6 @@
 using HarmonyLib;
 using Kitchen;
 using KitchenMods;
-using KitchenSmartNoClip;
 using System.Reflection;
 using UnityEngine;
 using TMPro;
@@ -11,7 +10,7 @@ using Unity.Entities;
 // Namespace should have "Kitchen" in the beginning
 namespace KitchenPhoneIndicators
 {
-    public class PhoneIndicators : GameSystemBase, IModSystem
+    public class PhoneIndicators : GameSystemBase, IModSystem, IModInitializer
     {
         #region Pre
         // KitchenLib Stuff - Keep it for additional information once needed
@@ -48,7 +47,7 @@ namespace KitchenPhoneIndicators
         protected override void Initialise()
         {
             // Initialise gets called every time the game starts and when joining someone else
-            if (GameObject.FindObjectOfType<SmartNoClipMono>() != null)
+            if (GameObject.FindObjectOfType<PhoneIndicatorsMono>() != null)
             {
                 return;
             }
