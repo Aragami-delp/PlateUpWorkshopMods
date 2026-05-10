@@ -30,7 +30,7 @@ namespace KitchenPhoneIndicators
         public void PlayerView_Update_Prefix()
         {
             // Check for any kind of data change and execute noclip update
-            if (GameInfo.IsPreparationTime != m_isPrepTime)
+            if (GameInfo.IsPreparationTime != m_isPrepTime) // TODO: No practice mode
             {
                 m_isPrepTime = GameInfo.IsPreparationTime;
                 // Switched to Day
