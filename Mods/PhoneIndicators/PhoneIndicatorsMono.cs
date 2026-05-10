@@ -1,5 +1,4 @@
 ﻿using Kitchen;
-using KitchenLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,7 +59,7 @@ namespace KitchenPhoneIndicators
                 if (timesOfDay.Count > 30) { return; } // Why would you want to use the mod with more than 30 groups?! -- That might already be too much
 
 #if DEBUG
-                PhoneIndicators.LogWarning(string.Join("|", times)); // Correct
+                PhoneIndicators.LogWarning(string.Join("|", timesOfDay)); // Correct
 #endif
 
                 Transform indicatorHolder = new GameObject("PhoneIndicatorHolder").transform;
